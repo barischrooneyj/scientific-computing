@@ -5,9 +5,9 @@ import numpy as np
 from matplotlib.animation import FuncAnimation
 
 D = 1
-N = 5  # Length of box.
-dx = 1/N
-dy = 1/N
+N = 7  # Length of box.
+dx = 1 / N
+dy = 1 / N
 timesteps = 100
 delta_t = 1 / timesteps
 # First indexed by time, then i and j.
@@ -40,13 +40,28 @@ for t in range(1, timesteps):
             grid[t][i][j] = diffusion_func(t-1, i, j)
 
 # Plot an animation of the diffusion over time.
-im = plt.imshow(grid[0].T)
+im = plt.imshow(np.flipud(grid[0].T))
 m = plt.cm.ScalarMappable(cmap=cm.coolwarm)
 m.set_array(grid[-1])
 plt.colorbar(m, boundaries=np.arange(0, 1.1, .1))
 def animate(t):
     global im
     im.remove()
-    im = plt.imshow(grid[t].T, cmap=cm.coolwarm)
+    im = plt.imshow(np.flipud(grid[t].T), cmap=cm.coolwarm)
 ani = FuncAnimation(plt.gcf(), animate, frames=len(grid))
 plt.show()
+
+# A plot of concentration at each y-value, for a few different times.
+# ts = [0.001, 0.01, 0.1, 1.0]
+# js = np.arange(0, 1, 0.1)
+# print(js)
+# for t in ts:
+#     timestep = int(t * timesteps)
+#     if timestep == timesteps: timestep - 1
+#     cs = [grid[timestep][int(j * N)][0] for j in js]
+#     plt.plot(js, cs)
+# plt.show()
+# print(xs)
+
+# print(int(timesteps * 0.5))
+# print(grid[int(timesteps * 0.5)])
