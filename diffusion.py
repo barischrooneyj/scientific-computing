@@ -5,10 +5,10 @@ import numpy as np
 from matplotlib.animation import FuncAnimation
 
 D = 1
-N = 7  # Length of box.
-dx = 1 / N
-dy = 1 / N
-timesteps = 100
+N = 8  # Length of box.
+dx = 1. / N
+dy = 1. / N
+timesteps = 1000
 delta_t = 1 / timesteps
 # First indexed by time, then i and j.
 grid = np.zeros(shape=(timesteps, N, N))
@@ -63,5 +63,8 @@ plt.show()
 # plt.show()
 # print(xs)
 
-# print(int(timesteps * 0.5))
-# print(grid[int(timesteps * 0.5)])
+print(int(timesteps * 0.5))
+print(grid[int(timesteps * 0.5)])
+
+# for i in range(10):
+#     print(grid[i])
