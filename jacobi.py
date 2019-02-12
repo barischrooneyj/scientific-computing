@@ -54,7 +54,31 @@ def gaussSeidel(matrix_len, matrix, threshold):
     return (matrix, terminate)
 
 
-def finalMatrix(matrix_len=6, time_steps=100, threshold=10 ** -5, method=jacobi):
+def sor(matrix_len, matrix, threshold, omega):
+    """A new matrix based on matrix at previous time, successive over relaxation."""
+
+    terminate = True
+
+    # For all rows but top and bottom.
+    for i in range(1, matrix_len - 1):
+        for j in range(matrix_len):
+
+            prev_value = matrix[i][i]
+            matrix[i][j] = (omega * 0.25 * (
+                matrix[i + 1][j]
+                + matrix[i - 1][j]
+                + matrix[i][(j + 1) % matrix_len]
+                + matrix[i][(j - 1) % matrix_len]
+            )) + ((1 - omega) * prev_value)
+            print((prev_value, matrix[i][j]))
+
+            if abs(matrix[i][j] - prev_value) > threshold:
+                terminate = False
+
+    return (matrix, terminate)
+
+
+def finalMatrix(matrix_len=50, threshold=10 ** -5, method=jacobi):
     """Perform Jacobi iteration until convergence."""
 
     # Set up initial matrix.
@@ -68,4 +92,6 @@ def finalMatrix(matrix_len=6, time_steps=100, threshold=10 ** -5, method=jacobi)
     return matrix
 
 
-print(finalMatrix(method=gaussSeidel))
+# print(finalMatrix(method=jacobi))
+# print(finalMatrix(method=gaussSeidel))
+print(finalMatrix(method=lambda ml, m, t: sor(ml, m, t, 1.2)))
