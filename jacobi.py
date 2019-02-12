@@ -40,7 +40,7 @@ def gaussSeidel(matrix_len, matrix, threshold):
     for i in range(1, matrix_len - 1):
         for j in range(matrix_len):
 
-            prev_value = matrix[i][i]
+            prev_value = matrix[i][j]
             matrix[i][j] = 0.25 * (
                 matrix[i + 1][j]
                 + matrix[i - 1][j]
@@ -63,14 +63,14 @@ def sor(matrix_len, matrix, threshold, omega):
     for i in range(1, matrix_len - 1):
         for j in range(matrix_len):
 
-            prev_value = matrix[i][i]
+            prev_value = matrix[i][j]
             matrix[i][j] = (omega * 0.25 * (
                 matrix[i + 1][j]
                 + matrix[i - 1][j]
                 + matrix[i][(j + 1) % matrix_len]
                 + matrix[i][(j - 1) % matrix_len]
             )) + ((1 - omega) * prev_value)
-            print((prev_value, matrix[i][j]))
+            #print((prev_value, matrix[i][j]))
 
             if abs(matrix[i][j] - prev_value) > threshold:
                 terminate = False
@@ -78,7 +78,7 @@ def sor(matrix_len, matrix, threshold, omega):
     return (matrix, terminate)
 
 
-def finalMatrix(matrix_len=50, threshold=10 ** -5, method=jacobi):
+def finalMatrix(matrix_len=10, threshold=10 ** -5, method=jacobi):
     """Perform Jacobi iteration until convergence."""
 
     # Set up initial matrix.
