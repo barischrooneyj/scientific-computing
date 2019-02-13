@@ -3,12 +3,13 @@ import matplotlib.collections as mcoll
 import matplotlib.pyplot as plt
 import numpy as np
 
+from matplotlib import cm
 from matplotlib.animation import FuncAnimation, writers
 
 
 def getStringMatrix(L=1, N=500, endTime=800, c=1, deltaT=0.001,
                     phi_func=lambda x: math.sin(2 * math.pi * x)):
-    """A matrix, a wave amplitude at each position at each time step."""
+    """A matrix, indexed first by time step then by x coordinate."""
 
     stringMatrix = []
     startString = [0] * (N+1)
@@ -40,15 +41,20 @@ def getStringMatrix(L=1, N=500, endTime=800, c=1, deltaT=0.001,
     return stringMatrix
 
 
-def animate(stringMatrix, N=500, frameSkip=5):
-    """Plot a repeating animation of the wave over time."""
 
+def animate(stringMatrix, N=500, frameSkip=5):
+    """Plot a repeating animation of the wave over time.
+    Args:
+        N: the number of points on the x-axis.
+    """
+
+    colors = [cm.jet(x) for x in np.linspace(0, 1, len(stringMatrix))]
     x = range(N + 1)
     line, = plt.plot(x, stringMatrix[0])
     def animate(i):
         nonlocal line
         line.remove()
-        line, = plt.plot(x, stringMatrix[i])
+        line, = plt.plot(x, stringMatrix[i], color=colors[i])
     ani = FuncAnimation(
         plt.gcf(), animate, frames=range(0, len(stringMatrix), frameSkip),
         interval=1)
@@ -64,22 +70,27 @@ if __name__ == "__main__":
     ]
 
     # Generate a plot for each of the three setups.
-    time_fractions = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+    time_fractions = np.linspace(0, 1, 30)
 
     # For each Phi function.
     for (filename, title, phi_func) in titles_and_phi_funcs:
         stringMatrix = getStringMatrix(phi_func=phi_func)
+        colors = [cm.jet(x) for x in np.linspace(0.2, 0.8, len(stringMatrix))]
         # Plot for each time step.
         for time_fraction in time_fractions:
-            time_step = int((len(stringMatrix[0]) - 1) * time_fraction)
+            time_step = int((len(stringMatrix) - 1) * time_fraction)
             plt.plot(
                 range(len(stringMatrix[0])),
                 stringMatrix[time_step],
-                label=str(time_fraction)
+                label=(int(time_fraction)
+                       if time_step == 0 or time_step == (len(stringMatrix) - 1)
+                       else None),
+                color=colors[time_step]
             )
         plt.legend()
         plt.title(title)
         plt.savefig(filename + ".png", bbox_inches="tight")
+        print("Saved {}.png".format(filename))
         plt.close()
 
     Writer = writers['ffmpeg']
@@ -89,4 +100,4 @@ if __name__ == "__main__":
     for (filename, title, phi_func) in titles_and_phi_funcs:
         ani = animate(getStringMatrix(phi_func=phi_func))
         ani.save(filename + ".mp4", writer=writer)
-        print("Saved")
+        print("Saved {}.mp4".format(filename))
