@@ -4,17 +4,8 @@ import numpy as np
 
 from matplotlib.animation import FuncAnimation
 
-D = 1
-N = 8  # Length of box.
-dx = 1. / N
-dy = 1. / N
-timesteps = 1000
-delta_t = 1 / timesteps
-# First indexed by time, then i and j.
-grid = np.zeros(shape=(timesteps, N, N))
 
-
-def diffusion_func(pt, i, j):
+def diffusion_func(grid, pt, i, j, D, N, delta_t, dx):
     """The concentration based on previous time pt and position (i, j)."""
     # Top boundary condition.
     if (j == N-1):
@@ -33,23 +24,41 @@ def diffusion_func(pt, i, j):
         )
     )
 
-# Run the simulation for every time step.
-for t in range(1, timesteps):
-    for i in range(N):
-        for j in range(N):
-            grid[t][i][j] = diffusion_func(t-1, i, j)
 
-# Plot an animation of the diffusion over time.
-im = plt.imshow(np.flipud(grid[0].T))
-m = plt.cm.ScalarMappable(cmap=cm.coolwarm)
-m.set_array(grid[-1])
-plt.colorbar(m, boundaries=np.arange(0, 1.1, .1))
-def animate(t):
-    global im
-    im.remove()
-    im = plt.imshow(np.flipud(grid[t].T), cmap=cm.coolwarm)
-ani = FuncAnimation(plt.gcf(), animate, frames=len(grid))
-plt.show()
+def getSimulation(D, N, iterations):
+    """Return a matrix indexed first by time, then i and j."""
+    dx = 1 / N
+    dy = 1 / N
+    delta_t = 1 / iterations
+    grid = np.zeros(shape=(iterations, N, N))
+    # Run the simulation for every time step.
+    for t in range(1, iterations):
+        for i in range(N):
+            for j in range(N):
+                grid[t][i][j] = diffusion_func(grid, t-1, i, j, D, N, delta_t, dx)
+    return grid
+
+
+def makeAnimation(grid, show=False):
+    """Generate and show an animation of diffusion."""
+    im = plt.imshow(np.flipud(grid[0].T))
+    m = plt.cm.ScalarMappable(cmap=cm.coolwarm)
+    m.set_array(grid[-1])
+    plt.colorbar(m, boundaries=np.arange(0, 1.1, .1))
+    def animate(t):
+        nonlocal im
+        im.remove()
+        im = plt.imshow(np.flipud(grid[t].T), cmap=cm.coolwarm)
+        plt.title("Time {0:.{1}f}".format(t / len(grid), 3))
+    ani = FuncAnimation(plt.gcf(), animate, frames=len(grid))
+    if show:
+        plt.show()
+
+
+if __name__ == "__main__":
+    grid = getSimulation(D=1, N=10, iterations=5000)
+    makeAnimation(grid, show=True)
+
 
 # A plot of concentration at each y-value, for a few different times.
 # ts = [0.001, 0.01, 0.1, 1.0]
@@ -61,10 +70,10 @@ plt.show()
 #     cs = [grid[timestep][int(j * N)][0] for j in js]
 #     plt.plot(js, cs)
 # plt.show()
-# print(xs)
 
-print(int(timesteps * 0.5))
-print(grid[int(timesteps * 0.5)])
+# print(xs)
+# print(int(timesteps * 0.5))
+# print(grid[int(timesteps * 0.5)])
 
 # for i in range(10):
 #     print(grid[i])
