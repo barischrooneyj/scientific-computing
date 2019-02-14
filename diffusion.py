@@ -39,41 +39,59 @@ def getSimulation(D, N, iterations):
     return grid
 
 
-def makeAnimation(grid, show=False):
+def makeAnimation(grid, show=False, save_times=[0.001, 0.01, 0.1, 1.0]):
     """Generate and show an animation of diffusion."""
     im = plt.imshow(np.flipud(grid[0].T))
     m = plt.cm.ScalarMappable(cmap=cm.coolwarm)
     m.set_array(grid[-1])
-    plt.colorbar(m, boundaries=np.arange(0, 1.1, .1))
+    plt.colorbar(
+        m,
+        label="Concentration",
+        boundaries=np.arange(0, 1.01, .01),
+        ticks=[0, 1]
+    )
+    plt.xlabel("x")
+    plt.ylabel("y")
+    save_indices = [
+        min(len(grid) - 1, int(save_time * len(grid) ))
+        for save_time in save_times]
+    print("Saving animation at index {}".format(save_indices))
     def animate(t):
         nonlocal im
         im.remove()
         im = plt.imshow(np.flipud(grid[t].T), cmap=cm.coolwarm)
-        plt.title("Time {0:.{1}f}".format(t / len(grid), 3))
-    ani = FuncAnimation(plt.gcf(), animate, frames=len(grid))
+        plt.title("t = {0:.3f}".format(t / len(grid)))
+        if t in save_indices:
+            plt.savefig("animation-t-{}.png".format(t))
+    ani = FuncAnimation(plt.gcf(), animate, frames=len(grid), interval=1)
+    if show:
+        plt.show()
+
+
+def plotAtTimes(grid, N, times=[0.001, 0.01, 0.1, 1.0], show=False, save=False):
+    # A plot of concentration at each y-value, for a few different times.
+    js = list(range(len(grid[0])))
+    for t in times:
+        # Convert time fraction to index.
+        timestep = int(t * (len(grid) - 1))
+        # Concentration at each vertical for j=0.
+        cs = [grid[timestep][0][j] for j in js]
+        plt.plot(js, cs, label="t = {0:.3f}".format(t))
+    plt.xlabel("Concentration")
+    plt.ylabel("Height")
+    plt.legend()
+    if save:
+        plt.savefig("concentration-plot.png", bbox_inches="tight")
     if show:
         plt.show()
 
 
 if __name__ == "__main__":
-    grid = getSimulation(D=1, N=10, iterations=5000)
+    grid = getSimulation(D=1, N=20, iterations=1000)
     makeAnimation(grid, show=True)
-
-
-# A plot of concentration at each y-value, for a few different times.
-# ts = [0.001, 0.01, 0.1, 1.0]
-# js = np.arange(0, 1, 0.1)
-# print(js)
-# for t in ts:
-#     timestep = int(t * timesteps)
-#     if timestep == timesteps: timestep - 1
-#     cs = [grid[timestep][int(j * N)][0] for j in js]
-#     plt.plot(js, cs)
-# plt.show()
-
+    plotAtTimes(grid, N=10, show=False, save=True)
 # print(xs)
 # print(int(timesteps * 0.5))
 # print(grid[int(timesteps * 0.5)])
-
 # for i in range(10):
 #     print(grid[i])
