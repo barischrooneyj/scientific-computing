@@ -130,5 +130,5 @@ if __name__ == "__main__":
     grid = getSimulation(D=1, N=20, delta_t=0.001, final_time=1)
     # two_epsilon = lambda a, b: (a - b < 2 * np.finfo(np.float32).eps).all()
     # grid = getSimulation(D=1, N=20, delta_t=0.001, terminate_when=two_epsilon)
-    # makeAnimation(grid, show=False, save=True)
-    plotAtTimes(grid, N=10, show=False, save=True)
+    makeAnimation(grid, show=True, save=False)
+    # plotAtTimes(grid, N=10, show=False, save=True)
