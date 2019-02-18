@@ -14,6 +14,9 @@ def diffusion_func(grid, pt, i, j, D, N, delta_t, dx):
     # Bottom boundary condition.
     if (j == 0):
         return 0
+    # Incase no previous data.
+    if pt < 0:
+        return 0
     return (
         grid[pt][i][j] + (delta_t * D / dx ** 2) * (
             # Wrap around on the x-axis.
@@ -49,10 +52,11 @@ def getSimulation(D, N, delta_t, final_time=None, terminate_when=None):
         print("delta_t = {}".format(delta_t, final_time, iterations))
 
     grid = np.zeros(shape=(128, N, N))
-    # Run the simulation for every time step.
+    # Run the simulation, start by populating index t = 0.
     for t in itertools.count():
         # Stop when final index reached or termination condition.
-        if (final_time and t == iterations - 1
+        # When t = iterations we stop, final index is t - 1.
+        if (final_time and t == iterations 
             or terminate_when and t > 2 and terminate_when(grid[t - 1], grid[t - 2])):
             break
         # Resize array if size reached.
@@ -63,7 +67,7 @@ def getSimulation(D, N, delta_t, final_time=None, terminate_when=None):
             for j in range(N):
                 grid[t][i][j] = diffusion_func(
                     grid, t-1, i, j, D, N, delta_t, dx)
-    return grid[:t + 1]
+    return grid[:t]
 
 
 def makeAnimation(grid, show=False, save=False,
@@ -83,16 +87,19 @@ def makeAnimation(grid, show=False, save=False,
     save_indices = [
         min(len(grid) - 1, int(save_time * len(grid) ))
         for save_time in save_times]
-    print("Saving animation at times {}".format(save_times))
+    print("Saving animation at times {} indices {}".format(
+        save_times, save_indices))
     def animate(t):
         nonlocal im
         im.remove()
         im = plt.imshow(np.flipud(grid[t].T), cmap=cm.coolwarm)
-        plt.title("t = {0:.3f}".format(save_times[save_indices.index(t)]))
+        print(t)
         if t in save_indices:
+            plt.title("t = {}".format(save_times[save_indices.index(t)]))
             plt.savefig("animation-t-{}.png".format(
                 save_times[save_indices.index(t)]))
-    print(len(grid))
+        else:
+            plt.title("t = {0:.3f}".format(t / len(grid)))
     ani = FuncAnimation(plt.gcf(), animate, frames=len(grid), interval=1)
     if show:
         plt.show()
@@ -127,8 +134,15 @@ def plotAtTimes(grid, N, times=[0.001, 0.01, 0.1, 1.0], show=False, save=False):
 
 
 if __name__ == "__main__":
-    grid = getSimulation(D=1, N=20, delta_t=0.001, final_time=1)
-    # two_epsilon = lambda a, b: (a - b < 2 * np.finfo(np.float32).eps).all()
-    # grid = getSimulation(D=1, N=20, delta_t=0.001, terminate_when=two_epsilon)
-    makeAnimation(grid, show=True, save=False)
-    # plotAtTimes(grid, N=10, show=False, save=True)
+    D = 1
+    N = 20
+    delta_t = 0.001
+    final_time = 1
+    two_epsilon = lambda a, b: (a - b < 2 * np.finfo(np.float32).eps).all()
+
+    grid = getSimulation(D=D, N=N, delta_t=delta_t, final_time=final_time)
+    # grid = getSimulation(
+        # D=1, N=20, delta_t=delta_t, terminate_when=two_epsilon)
+
+    # makeAnimation(grid, show=True, save=True)
+    plotAtTimes(grid, N=N, show=False, save=True)
