@@ -80,70 +80,67 @@ def sor(matrix_len, matrix, threshold, omega):
 
 
 def finalMatrix(matrix_len=50, threshold=10 ** -5, method=jacobi):
-	"""Perform Jacobi iteration until convergence."""
-	
-	# Set up initial matrix.
-	matrix = np.zeros(shape=(matrix_len, matrix_len))
-	matrix[0] = [1] * matrix_len
-	matrix[-1] = [0] * matrix_len
-	
-	terminate = False
-	counter = 0
-	while (not terminate):
-		matrix, terminate = method(matrix_len, matrix, threshold)
-		counter += 1
-		
-	return matrix
+    """Perform Jacobi iteration until convergence."""
+
+    # Set up initial matrix.
+    matrix = np.zeros(shape=(matrix_len, matrix_len))
+    matrix[0] = [1] * matrix_len
+    matrix[-1] = [0] * matrix_len
+
+    terminate = False
+    counter = 0
+    while (not terminate):
+        matrix, terminate = method(matrix_len, matrix, threshold)
+        counter += 1
+
+    return matrix
 
 def tvalues(matrix_len=50, threshold=10 ** -5, method=jacobi):
 
-	dot = []
-	"""Perform Jacobi iteration until convergence."""
-	
-	# Set up initial matrix.
-	matrix = np.zeros(shape=(matrix_len, matrix_len))
-	matrix[0] = [1] * matrix_len
-	matrix[-1] = [0] * matrix_len
-	
-	terminate = False
-	counter = 0
-	while (not terminate):
-		matrix, terminate = method(matrix_len, matrix, threshold)
-		counter += 1
-		print(counter)
-		
-	t = [round(10**-i * counter) for i in range(5)]+[counter - 1]
-	
-	# Set up initial matrix.
-	matrix = np.zeros(shape=(matrix_len, matrix_len))
-	matrix[0] = [1] * matrix_len
-	matrix[-1] = [0] * matrix_len
-	
-	terminate = False
-	counter2 = 0
-	while (not terminate):
-		matrix, terminate = method(matrix_len, matrix, threshold)
-		
-		if counter2 in t:
-			temparray = []
-			for row in matrix:
-				temparray.append(row[0])
-			dot.append(temparray)
-		counter2 += 1
- 
-	return matrix, counter, dot
+    dot = []
+    """Perform Jacobi iteration until convergence."""
+
+    # Set up initial matrix.
+    matrix = np.zeros(shape=(matrix_len, matrix_len))
+    matrix[0] = [1] * matrix_len
+    matrix[-1] = [0] * matrix_len
+
+    terminate = False
+    counter = 0
+    while (not terminate):
+        matrix, terminate = method(matrix_len, matrix, threshold)
+        counter += 1
+        print(counter)
+
+    t = [round(10**-i * counter) for i in range(5)]+[counter - 1]
+
+    # Set up initial matrix.
+    matrix = np.zeros(shape=(matrix_len, matrix_len))
+    matrix[0] = [1] * matrix_len
+    matrix[-1] = [0] * matrix_len
+
+    terminate = False
+    counter2 = 0
+    while (not terminate):
+        matrix, terminate = method(matrix_len, matrix, threshold)
+
+        if counter2 in t:
+            temparray = []
+            for row in matrix:
+                temparray.append(row[0])
+            dot.append(temparray)
+        counter2 += 1
+
+    return matrix, counter, dot
 
 
 def sorWith3Args(matrix_len, matrix, threshold):
-	return sor(matrix_len, matrix, threshold, 1.9)
-	
+    return sor(matrix_len, matrix, threshold, 1.9)
+
 
 # print(finalMatrix(method=jacobi))
 # print(finalMatrix(method=gaussSeidel))
 for list in tvalues(method=sorWith3Args)[2]:
-	list.reverse()
-	plt.plot(range(len(list)), list)
+    list.reverse()
+    plt.plot(range(len(list)), list)
 plt.show()
-
-
-
