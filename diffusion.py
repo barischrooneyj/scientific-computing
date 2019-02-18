@@ -93,7 +93,7 @@ def makeAnimation(grid, show=False, save=False,
         nonlocal im
         im.remove()
         im = plt.imshow(np.flipud(grid[t].T), cmap=cm.coolwarm)
-        print(t)
+        # If at a given save time use that as title.
         if t in save_indices:
             plt.title("t = {}".format(save_times[save_indices.index(t)]))
             plt.savefig("animation-t-{}.png".format(
@@ -140,9 +140,10 @@ if __name__ == "__main__":
     final_time = 1
     two_epsilon = lambda a, b: (a - b < 2 * np.finfo(np.float32).eps).all()
 
-    grid = getSimulation(D=D, N=N, delta_t=delta_t, final_time=final_time)
-    # grid = getSimulation(
-        # D=1, N=20, delta_t=delta_t, terminate_when=two_epsilon)
+    # grid = getSimulation(D=D, N=N, delta_t=delta_t, final_time=final_time)
+    grid = getSimulation(
+        D=1, N=20, delta_t=delta_t, terminate_when=two_epsilon)
+    print(grid[-1])
 
-    # makeAnimation(grid, show=True, save=True)
+    makeAnimation(grid, show=False, save=True)
     plotAtTimes(grid, N=N, show=False, save=True)
