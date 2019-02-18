@@ -1,7 +1,7 @@
-N = 10 omega_min_time = 1.624
-N = 15 omega_min_time = 1.742
-N = 20 omega_min_time = 1.800
-N = 25 omega_min_time = 1.836
-N = 30 omega_min_time = 1.863
-N = 35 omega_min_time = 1.882
-N = 40 omega_min_time = 1.894
+N = 10 min_time = 30 omega_min_time = 1.625
+N = 15 min_time = 45 omega_min_time = 1.742
+N = 20 min_time = 61 omega_min_time = 1.797
+N = 25 min_time = 76 omega_min_time = 1.836
+N = 30 min_time = 90 omega_min_time = 1.863
+N = 35 min_time = 104 omega_min_time = 1.882
+N = 40 min_time = 119 omega_min_time = 1.894
