@@ -143,7 +143,6 @@ if __name__ == "__main__":
     # grid = getSimulation(D=D, N=N, delta_t=delta_t, final_time=final_time)
     grid = getSimulation(
         D=1, N=20, delta_t=delta_t, terminate_when=two_epsilon)
-    print(grid[-1])
 
     makeAnimation(grid, show=False, save=True)
     plotAtTimes(grid, N=N, show=False, save=True)
