@@ -141,8 +141,8 @@ def plotConvergenceOverNAndOmega(filename, omegas, Ns):
             _, time = finalMatrix(
                 matrix_len=N, method=lambda ml, m, t: sor(ml, m, t, omega))
             times.append(time)
-        print("N = {} omega_min_time = {}".format(
-            N, omegas[times.index(min(times))]))
+        print("N = {} min_time = {} omega_min_time = {}".format(
+            N, min(times), omegas[times.index(min(times))]))
         plt.plot(omegas, times, label="N = {}".format(N))
     plt.title("Timesteps to converge as a function of N and ω")
     plt.xlabel("ω")
@@ -153,14 +153,36 @@ def plotConvergenceOverNAndOmega(filename, omegas, Ns):
     print("Saved {}".format(filename))
 
 
-plotConvergenceOverNAndOmega(
-    "1-J-optimal-omega.png",
-    omegas=np.linspace(1.6, 1.95, 100),
-    Ns=[10, 15, 20, 25, 30, 35, 40]
-)
-# print(finalMatrix(method=jacobi))
-# print(finalMatrix(method=gaussSeidel))
-# for list in tvalues(method=lambda ml, m, t: sor(ml, m, t, 1.9))[2]:
-#     list.reverse()
-#     plt.plot(range(len(list)), list)
-# plt.show()
+if __name__ == "__main__":
+
+    Ns_and_ranges = [
+        (10, 1.62-.05, 1.62+.05),
+        (15, 1.73-.05, 1.73+.05),
+        (20, 1.80-.05, 1.80+.05),
+        (25, 1.84-.05, 1.84+.05),
+        (30, 1.87-.05, 1.87+.05),
+        (35, 1.88-.05, 1.88+.05),
+        (40, 1.90-.05, 1.90+.05)
+    ]
+
+    # Plot for all N.
+    plotConvergenceOverNAndOmega(
+        "1-J-optimal-omega.png",
+        omegas=np.linspace(1.6, 1.95, 100),
+        Ns=[N for N, _1, _2 in Ns_and_ranges]
+    )
+
+    # Find optimal omega per N.
+    for N, range_min, range_max in Ns_and_ranges:
+        plotConvergenceOverNAndOmega(
+            "_unused.png",
+            omegas=np.linspace(range_min, range_max, 100),
+            Ns=[N]
+        )
+
+    # print(finalMatrix(method=jacobi))
+    # print(finalMatrix(method=gaussSeidel))
+    # for list in tvalues(method=lambda ml, m, t: sor(ml, m, t, 1.9))[2]:
+    #     list.reverse()
+    #     plt.plot(range(len(list)), list)
+    # plt.show()
