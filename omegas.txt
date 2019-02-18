@@ -1,0 +1,7 @@
+N = 10 omega_min_time = 1.6247474747474748
+N = 15 omega_min_time = 1.7378787878787878
+N = 20 omega_min_time = 1.797979797979798
+N = 25 omega_min_time = 1.8368686868686868
+N = 30 omega_min_time = 1.8651515151515152
+N = 35 omega_min_time = 1.8828282828282827
+N = 40 omega_min_time = 1.896969696969697

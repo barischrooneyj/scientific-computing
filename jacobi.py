@@ -98,13 +98,13 @@ def finalMatrix(matrix_len=50, threshold=10 ** -5, method=jacobi):
         matrix, terminate = method(matrix_len, matrix, threshold)
         counter += 1
 
-    return matrix
+    return matrix, counter
+
 
 def tvalues(matrix_len=50, threshold=10 ** -5, method=jacobi):
-
-    dot = []
     """Perform Jacobi iteration until convergence."""
 
+    dot = []
     matrix = getInitialMatrix(matrix_len)
 
     terminate = False
@@ -133,9 +133,34 @@ def tvalues(matrix_len=50, threshold=10 ** -5, method=jacobi):
     return matrix, counter, dot
 
 
-print(finalMatrix(method=jacobi))
+def plotConvergenceOverNAndOmega(filename, omegas, Ns):
+    """A plot of time to converge for multiple lines (N) against omega."""
+    for N in Ns:
+        times = []
+        for omega in omegas:
+            _, time = finalMatrix(
+                matrix_len=N, method=lambda ml, m, t: sor(ml, m, t, omega))
+            times.append(time)
+        print("N = {} omega_min_time = {}".format(
+            N, omegas[times.index(min(times))]))
+        plt.plot(omegas, times, label="N = {}".format(N))
+    plt.title("Timesteps to converge as a function of N and ω")
+    plt.xlabel("ω")
+    plt.ylabel("Timesteps to converge")
+    plt.legend()
+    plt.savefig(filename)
+    plt.show()
+    print("Saved {}".format(filename))
+
+
+plotConvergenceOverNAndOmega(
+    "1-J-optimal-omega.png",
+    omegas=np.linspace(1.6, 1.95, 100),
+    Ns=[10, 15, 20, 25, 30, 35, 40]
+)
+# print(finalMatrix(method=jacobi))
 # print(finalMatrix(method=gaussSeidel))
-for list in tvalues(method=lambda ml, m, t: sor(ml, m, t, 1.9))[2]:
-    list.reverse()
-    plt.plot(range(len(list)), list)
-plt.show()
+# for list in tvalues(method=lambda ml, m, t: sor(ml, m, t, 1.9))[2]:
+#     list.reverse()
+#     plt.plot(range(len(list)), list)
+# plt.show()
