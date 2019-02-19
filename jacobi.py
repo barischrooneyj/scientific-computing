@@ -41,8 +41,13 @@ def jacobi(matrix_len, prev_matrix, threshold, sink=None):
     return (new_matrix, terminate)
 
 
-def gaussSeidel(matrix_len, matrix, threshold):
-    """A new matrix based on matrix at previous time, updated in place."""
+def gaussSeidel(matrix_len, matrix, threshold, sink=None):
+    """A new matrix based on matrix at previous time, updated in place.
+
+    Supports an optional sink argument as a matrix of dimensions (matrix_len,
+    matrix_len).
+
+    """
 
     terminate = True
 
@@ -51,12 +56,15 @@ def gaussSeidel(matrix_len, matrix, threshold):
         for j in range(matrix_len):
 
             prev_value = matrix[i][j]
-            matrix[i][j] = 0.25 * (
-                matrix[i + 1][j]
-                + matrix[i - 1][j]
-                + matrix[i][(j + 1) % matrix_len]
-                + matrix[i][(j - 1) % matrix_len]
-            )
+            if sink is not None and not sink[i][j]:
+                matrix[i][j] = 0.25 * (
+                    matrix[i + 1][j]
+                    + matrix[i - 1][j]
+                    + matrix[i][(j + 1) % matrix_len]
+                    + matrix[i][(j - 1) % matrix_len]
+                )
+            else:
+                new_matrix[i][j] = 0
 
             if abs(matrix[i][j] - prev_value) > threshold:
                 terminate = False
@@ -64,8 +72,13 @@ def gaussSeidel(matrix_len, matrix, threshold):
     return (matrix, terminate)
 
 
-def sor(matrix_len, matrix, threshold, omega):
-    """A new matrix based on matrix at previous time, successive over relaxation."""
+def sor(matrix_len, matrix, threshold, omega, sink=None):
+    """A new matrix based on matrix at previous time, successive over relaxation.
+
+    Supports an optional sink argument as a matrix of dimensions (matrix_len,
+    matrix_len).
+
+    """
 
     terminate = True
 
@@ -74,13 +87,15 @@ def sor(matrix_len, matrix, threshold, omega):
         for j in range(matrix_len):
 
             prev_value = matrix[i][j]
-            matrix[i][j] = (omega * 0.25 * (
-                matrix[i + 1][j]
-                + matrix[i - 1][j]
-                + matrix[i][(j + 1) % matrix_len]
-                + matrix[i][(j - 1) % matrix_len]
-            )) + ((1 - omega) * prev_value)
-            #print((prev_value, matrix[i][j]))
+            if sink is not None and not sink[i][j]:
+                matrix[i][j] = (omega * 0.25 * (
+                    matrix[i + 1][j]
+                    + matrix[i - 1][j]
+                    + matrix[i][(j + 1) % matrix_len]
+                    + matrix[i][(j - 1) % matrix_len]
+                )) + ((1 - omega) * prev_value)
+            else:
+                new_matrix[i][j] = 0
 
             if abs(matrix[i][j] - prev_value) > threshold:
                 terminate = False
