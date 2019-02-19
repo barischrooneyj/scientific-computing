@@ -2,6 +2,7 @@ import math
 
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.optimize as optimize
 
 
 def jacobi(matrix_len, prev_matrix, threshold, sink=None):
@@ -95,7 +96,7 @@ def sor(matrix_len, matrix, threshold, omega, sink=None):
                     + matrix[i][(j - 1) % matrix_len]
                 )) + ((1 - omega) * prev_value)
             else:
-                new_matrix[i][j] = 0
+                matrix[i][j] = 0
 
             if abs(matrix[i][j] - prev_value) > threshold:
                 terminate = False
@@ -111,15 +112,15 @@ def getInitialMatrix(matrix_len):
     return matrix
 
 
-def finalMatrix(matrix_len=50, threshold=10 ** -5, method=jacobi):
-    """Perform Jacobi iteration until convergence."""
+def finalMatrix(matrix_len=50, threshold=10 ** -5, method=jacobi, sink=None):
+    """Run a simulation until convergence."""
 
     matrix = getInitialMatrix(matrix_len)
 
     terminate = False
     counter = 0
     while (not terminate):
-        matrix, terminate = method(matrix_len, matrix, threshold)
+        matrix, terminate = method(matrix_len, matrix, threshold, sink)
         counter += 1
 
     return matrix, counter
@@ -186,12 +187,11 @@ def c(x,t):
     return answer
 
 
-def makeSink(matrix_len):
+def makeSink(matrix_len, sinks=[]):
+    """Make a sink matrix of given length and sinks at given locations."""
     sink = np.zeros(shape=(matrix_len, matrix_len))
-    sink[int(matrix_len/2)][int(matrix_len/2)] = True
-    sink[int(matrix_len/2+1)][int(matrix_len/2)] = True
-    sink[int(matrix_len/2)][int(matrix_len/2+1)] = True
-    sink[int(matrix_len/2+1)][int(matrix_len/2+1)] = True
+    for (i, j) in sinks:
+        sink[i][j] = True
     return sink
 
 
@@ -211,7 +211,15 @@ def plotAnalyticalSolutionsForJacobi(sink=None):
         plt.plot(a, list, c =color[i], label = "Analytic for t = " + str(1/(10.0**i)))
 
     i=0
-    for tv in tvalues(method=lambda ml, m, t: jacobi(ml, m, t, sink=makeSink(ml)))[2]:
+    a_sink = makeSink(N, [
+        (int(N/2), int(N/2)),
+        (int(N/2+1), int(N/2)),
+        (int(N/2), int(N/2+1)),
+        (int(N/2+1), int(N/2+1))
+        ])
+    for tv in tvalues(
+        matrix_len=N, method=lambda ml, m, t: jacobi(ml, m, t, sink=a_sink)
+    )[2]:
         tv.reverse()
         plt.plot([el/(len(tv)-1) for el in range(len(tv))] , tv, c = color[-i-1], linestyle= ":", label="Jacobi")
         i += 1
@@ -274,7 +282,61 @@ def plotTimeToConverge():
         )
 
 
+def findOptimalOmega(matrix_len, method, initial_omega=1.8):
+    """Return the optimal omega using scipy.optimize."""
+    f = lambda omega: finalMatrix(matrix_len=matrix_len, method=method)[1]
+    result = optimize.minimize(f, x0=initial_omega)
+    print(result.x)
+
+
+def plotEffectOfSinks():
+    """Plot the effect of sinks on time to converge and optimal omega."""
+
+    N = 20
+    delta_t = 0.001
+    final_time = 1
+    method = sor
+
+    # A list of different sinks.
+    sinks = [
+        makeSink(N, [(3, 3), (3, 4), (4, 3), (4, 4)]),
+        makeSink(N, [(3, 3), (3, 4), (4, 3), (4, 4), (4, 5), (5, 4)])
+    ]
+    sink_sizes = [np.sum(sink) for sink in sinks]
+
+    # These will be filled in by the simulations.
+    iterations = []
+    optimal_omegas = []
+
+    # For each sink sun simulation and record results.
+    for i, sink in enumerate(sinks):
+
+        matrix, simulation_iterations = finalMatrix(
+            matrix_len=N, sink=sink, method=method)
+        iterations.append(simulation_iterations)
+
+        optimal_omega = findOptimalOmega(N, method, initial_omega=1.8)
+        optimal_omegas.append(optimal_omega)
+
+        print("Sink {} size {} iterations {} optimal omega {}".format(
+            i, sink_sizes[i], iterations, optimal_omega))
+
+    print(sink_sizes)
+    print(iterations)
+    print(optimal_omegas)
+
+    plt.plot(sink_sizes, iterations)
+    plt.title("Timesteps as a function of sink size")
+    plt.show()
+    plt.close()
+
+    plt.plot(sink_sizes, optimal_omegas)
+    plt.title("Optimal omega as a function of sink size")
+    plt.show()
+
+
 if __name__ == "__main__":
     # plotTimeToConverge()
-    plotAnalyticalSolutionsForJacobi()
+    # plotAnalyticalSolutionsForJacobi()
     # plotTValues()
+    plotEffectOfSinks()
