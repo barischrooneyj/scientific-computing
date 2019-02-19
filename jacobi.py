@@ -198,7 +198,7 @@ def makeSink(matrix_len):
 color = ["red","green","blue","yellow", "black"]
 
 
-def plotAnalyticalSolutionsForJacobi():
+def plotAnalyticalSolutionsForJacobi(sink=None):
     """Plot the concentration at a height for a number of timesteps."""
 
     N=100
@@ -211,7 +211,7 @@ def plotAnalyticalSolutionsForJacobi():
         plt.plot(a, list, c =color[i], label = "Analytic for t = " + str(1/(10.0**i)))
 
     i=0
-    for tv in tvalues(method=jacobi)[2]:
+    for tv in tvalues(method=lambda ml, m, t: jacobi(ml, m, t, sink=makeSink(ml)))[2]:
         tv.reverse()
         plt.plot([el/(len(tv)-1) for el in range(len(tv))] , tv, c = color[-i-1], linestyle= ":", label="Jacobi")
         i += 1
