@@ -1,11 +1,16 @@
+import math
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-# 1.3
 
+def jacobi(matrix_len, prev_matrix, threshold, sink=None):
+    """A new matrix based on matrix at previous time.
 
-def jacobi(matrix_len, prev_matrix, threshold):
-    """A new matrix based on matrix at previous time."""
+    Supports an optional sink argument as a matrix of dimensions (matrix_len,
+    matrix_len).
+
+    """
 
     new_matrix = np.zeros(shape=(matrix_len, matrix_len))
 
@@ -19,12 +24,16 @@ def jacobi(matrix_len, prev_matrix, threshold):
     for i in range(1, matrix_len - 1):
         for j in range(matrix_len):
 
-            new_matrix[i][j] = 0.25 * (
-                prev_matrix[i + 1][j]
-                + prev_matrix[i - 1][j]
-                + prev_matrix[i][(j + 1) % matrix_len]
-                + prev_matrix[i][(j - 1) % matrix_len]
-            )
+            if sink is not None and not sink[i][j]:
+                new_matrix[i][j] = 0.25 * (
+                    prev_matrix[i + 1][j]
+                    + prev_matrix[i - 1][j]
+                    + prev_matrix[i][(j + 1) % matrix_len]
+                    + prev_matrix[i][(j - 1) % matrix_len]
+                )
+            else:
+                new_matrix[i][j] = 0
+
 
             if abs(prev_matrix[i][j] - new_matrix[i][j]) > threshold:
                 terminate = False
@@ -153,7 +162,76 @@ def plotConvergenceOverNAndOmega(filename, omegas, Ns):
     print("Saved {}".format(filename))
 
 
-if __name__ == "__main__":
+def c(x,t):
+    D = 1
+    answer = 0
+    for i in range(100):
+        newit = math.erfc((1-x+2*i)/(2*math.sqrt(D*t))) - math.erfc((1+x+2*i)/(2*math.sqrt(D*t)))
+        answer += newit
+    return answer
+
+
+def makeSink(matrix_len):
+    sink = np.zeros(shape=(matrix_len, matrix_len))
+    sink[int(matrix_len/2)][int(matrix_len/2)] = True
+    sink[int(matrix_len/2+1)][int(matrix_len/2)] = True
+    sink[int(matrix_len/2)][int(matrix_len/2+1)] = True
+    sink[int(matrix_len/2+1)][int(matrix_len/2+1)] = True
+    return sink
+
+
+color = ["red","green","blue","yellow", "black"]
+
+
+def plotAnalyticalSolutionsForJacobi():
+    """Plot the concentration at a height for a number of timesteps."""
+
+    N=100
+    a = [i/N for i in range(N+1)]
+
+    plt.figure()
+
+    for i in range(5):
+        list = [c(j,1/(10.0**i)) for j in a]
+        plt.plot(a, list, c =color[i], label = "Analytic for t = " + str(1/(10.0**i)))
+
+    i=0
+    for tv in tvalues(method=jacobi)[2]:
+        tv.reverse()
+        plt.plot([el/(len(tv)-1) for el in range(len(tv))] , tv, c = color[-i-1], linestyle= ":", label="Jacobi")
+        i += 1
+
+    plt.legend()
+    plt.show()
+
+
+def plotTValues():
+
+    omega = 1.9
+    i = 0
+
+    tvall = tvalues(method=lambda ml, m, t: sor(ml, m, t, omega))[2]
+    for tv in tvall:
+    	tv.reverse()
+    	plt.plot([el/(len(tv)-1) for el in range(len(tv))], tv, c = color[-i-1], linestyle= "-.", label="SOR for t = " + str(1/(10.0**(len(tvall)-i))))
+    	i += 1
+
+    i = 0
+    for tv in tvalues(method=gaussSeidel)[2]:
+    	tv.reverse()
+    	plt.plot([el/(len(tv)-1) for el in range(len(tv))], [tvi/max(tv) for tvi in tv], c = color[i], linestyle= "--", label="Jacobi")
+    	i += 1
+
+    print(finalMatrix(method=gaussSeidel))
+    for list in tvalues(method=lambda ml, m, t: sor(ml, m, t, omega))[2]:
+    	list.reverse()
+    	plt.plot(range(len(list)), list)
+
+    plt.show()
+
+
+def plotTimeToConverge():
+    """Plot time to converge over N and omega and find optimal omega."""
 
     Ns_and_ranges = [
         (10, 1.62-.05, 1.62+.05),
@@ -180,9 +258,8 @@ if __name__ == "__main__":
             Ns=[N]
         )
 
-    # print(finalMatrix(method=jacobi))
-    # print(finalMatrix(method=gaussSeidel))
-    # for list in tvalues(method=lambda ml, m, t: sor(ml, m, t, 1.9))[2]:
-    #     list.reverse()
-    #     plt.plot(range(len(list)), list)
-    # plt.show()
+
+if __name__ == "__main__":
+    # plotTimeToConverge()
+    plotAnalyticalSolutionsForJacobi()
+    # plotTValues()
