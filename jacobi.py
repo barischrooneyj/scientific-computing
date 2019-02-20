@@ -403,7 +403,7 @@ if __name__ == "__main__":
     # plotTValues()
 
     if sys.argv[1] == "J":
-        plotEffectOfSinks(plot_omega=True)
+        plotEffectOfSinks(plot_iterations=True, plot_omega=False)
         imshowSinks(30, 36)
         imshowSinks(30, 37)
 
