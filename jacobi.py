@@ -1,4 +1,5 @@
 import math
+import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -296,7 +297,7 @@ def findOptimalOmega(matrix_len, method, initial_omega, sink=None):
         )
         print("result[1] = {}".format(result[1]))
         return result[1]
-    result = optimize.minimize_scalar(f, tol=0.0001, bracket=(1.5, 1.7, 1.95))
+    result = optimize.minimize_scalar(f, tol=0.001, bracket=(0.7, 1.7, 1.98))
     print("Optimal result.x = {}".format(result.x))
     return result.x
 
@@ -318,28 +319,28 @@ def makeRectangleSinks(matrix_len, total_size, rec_size=4):
         count += 1
         return count == total_size
 
-    for ith_row in range(1, max_recs_on_row + 1):
-        for jth_col in range(1, max_recs_on_row + 1):
+    for ith_row in range(max_recs_on_row):
+        for jth_col in range(max_recs_on_row):
             margin = 2
             # Calculate the top left coordinate of the rectangle.
-            i = int(((matrix_len - 1) - (2 * margin)) * (ith_row / max_recs_on_row) + margin)
-            j = int(((matrix_len - 1) - (2 * margin)) * (jth_col / max_recs_on_row) + margin)
+            i = int(((matrix_len - 1) - (2 * margin)) * (ith_row / (max_recs_on_row-1 if max_recs_on_row > 1 else 1)) + margin)
+            j = int(((matrix_len - 1) - (2 * margin)) * (jth_col / (max_recs_on_row-1 if max_recs_on_row > 1 else 1)) + margin)
             if countDone(i, j): return sink
             if countDone(i, j+1): return sink
             if countDone(i+1, j): return sink
             if countDone(i+1, j+1): return sink
 
 
-def plotEffectOfSinks():
+def plotEffectOfSinks(plot_iterations=False, plot_omega=False):
     """Plot the effect of sinks on time to converge and optimal omega."""
 
-    N = 20
+    N = 30
     delta_t = 0.001
     final_time = 1
     default_omega = 1.8
 
     # A list of sinks of increasing size.
-    sinks = [makeRectangleSinks(N, size) for size in range(1, 25+1)]
+    sinks = [makeRectangleSinks(N, size) for size in range(1, 200+1, 2)]
     print(sinks[-1])
     sink_sizes = [np.sum(sink) for sink in sinks]
 
@@ -350,36 +351,49 @@ def plotEffectOfSinks():
     # For each sink sun simulation and record results.
     for i, sink in enumerate(sinks):
 
-        print("\nFinding iterations")
-        matrix, simulation_iterations = finalMatrix(
-            matrix_len=N,
-            threshold=2 * np.finfo(np.float32).eps,
-            sink=sink,
-            method=lambda ml, m, t, s: sor(ml, m, t, default_omega, s)
-        )
-        iterations.append(simulation_iterations)
+        if plot_iterations:
+            print("\nFinding iterations")
+            matrix, simulation_iterations = finalMatrix(
+                matrix_len=N,
+                threshold=2 * np.finfo(np.float32).eps,
+                sink=sink,
+                method=lambda ml, m, t, s: sor(ml, m, t, default_omega, s)
+            )
+            iterations.append(simulation_iterations)
 
-        print("\nFinding optimal omega")
-        optimal_omegas.append(findOptimalOmega(
-            matrix_len=N,
-            initial_omega=default_omega,
-            sink=sink,
-            method=sor
-        ))
-        print("Sink {} size {} iterations {} optimal omega {}".format(
-            i, sink_sizes[i], iterations[i], optimal_omegas[i]))
+        if plot_omega:
+            print("\nFinding optimal omega")
+            optimal_omegas.append(findOptimalOmega(
+                matrix_len=N,
+                initial_omega=default_omega,
+                sink=sink,
+                method=sor
+            ))
+            print("Sink = {} size = {}".format(i, sink_sizes[i]))
+            if plot_iterations: print("iterations = {}".format(iterations))
+            if plot_omega: print("optimal omegas = {}".format(optimal_omegas))
 
     print(sink_sizes)
     print(iterations)
     print(optimal_omegas)
 
-    plt.plot(sink_sizes, iterations)
-    plt.title("Timesteps as a function of sink size")
-    plt.show()
-    plt.close()
+    if plot_iterations:
+        plt.plot(sink_sizes, iterations)
+        plt.title("Timesteps as a function of sink size")
+        plt.show()
+        plt.close()
 
-    plt.plot(sink_sizes, optimal_omegas)
-    plt.title("Optimal omega as a function of sink size")
+    if plot_omega:
+        plt.plot(sink_sizes, optimal_omegas)
+        plt.title("Optimal omega as a function of sink size")
+        plt.xlabel("Number of sinks")
+        plt.ylabel("Optimal omega")
+        plt.show()
+
+
+def imshowSinks(matrix_len, amount_sinks):
+    """Imshow matrices with sinks."""
+    plt.imshow(makeRectangleSinks(matrix_len, amount_sinks))
     plt.show()
 
 
@@ -387,4 +401,9 @@ if __name__ == "__main__":
     # plotTimeToConverge()
     # plotAnalyticalSolutionsForJacobi()
     # plotTValues()
-    plotEffectOfSinks()
+
+    if sys.argv[1] == "J":
+        plotEffectOfSinks(plot_omega=True)
+        imshowSinks(30, 36)
+        imshowSinks(30, 37)
+
