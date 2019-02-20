@@ -296,9 +296,42 @@ def findOptimalOmega(matrix_len, method, initial_omega, sink=None):
         )
         print("result[1] = {}".format(result[1]))
         return result[1]
-    result = optimize.minimize_scalar(f, bracket=(1.5, 1.7, 1.95))
-    print("Optimal omega = {}".format(result.x[0]))
-    return result.x[0]
+    result = optimize.minimize_scalar(f, tol=0.00001, bracket=(1.5, 1.7, 1.95))
+    print("Optimal result.x = {}".format(result.x))
+    return result.x
+
+
+def makeCentralSink(matrix_len, max_count):
+    """Make a sink of the number of elements in the center."""
+    sink = np.zeros(shape=(matrix_len, matrix_len))
+    i = int(matrix_len / 2)
+    j = int(matrix_len / 2)
+    r = 0  # Radius.
+    count = 0
+
+    def countDone(i_, j_):
+        """Set sink at given (i, j) and return if we're finished."""
+        sink[i_][j_] = True
+        nonlocal count
+        count += 1
+        return count == max_count
+
+    # Increase radius every timestep.
+    while True:
+        if r == 0:
+            if countDone(i, j): return sink
+        else:
+            # Iterate j from j-r to j+r with i set to i-r and i+1.
+            for new_j in range(j-r, j+r+1):
+                if countDone(i-r, new_j): return sink
+                if countDone(i+r, new_j): return sink
+            # Iterate i from i-r+1 to i+r-1 with j set to j-r and j+1.
+            # The additional ones in the iteration avoid duplicate corners.
+            for new_i in range(i-r+1, i+r-1+1):
+               if countDone(new_i, j-r): return sink
+               if countDone(new_i, j+r): return sink
+        r += 1
+
 
 
 def plotEffectOfSinks():
@@ -309,11 +342,10 @@ def plotEffectOfSinks():
     final_time = 1
     default_omega = 1.8
 
-    # A list of different sinks.
-    sinks = [
-        makeSink(N, [(3, 3), (3, 4), (4, 3), (4, 4)]),
-        makeSink(N, [(3, 3), (3, 4), (4, 3), (4, 4), (4, 5), (5, 4)])
-    ]
+    # A list of sinks of increasing size.
+    sinks = [makeCentralSink(N, size) for size in range(1, 25+1)]
+    print(sinks[-1])
+    return
     sink_sizes = [np.sum(sink) for sink in sinks]
 
     # These will be filled in by the simulations.
@@ -348,12 +380,12 @@ def plotEffectOfSinks():
 
     plt.plot(sink_sizes, iterations)
     plt.title("Timesteps as a function of sink size")
-    # plt.show()
-    # plt.close()
+    plt.show()
+    plt.close()
 
     plt.plot(sink_sizes, optimal_omegas)
     plt.title("Optimal omega as a function of sink size")
-    # plt.show()
+    plt.show()
 
 
 if __name__ == "__main__":
