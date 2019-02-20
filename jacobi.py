@@ -301,46 +301,14 @@ def findOptimalOmega(matrix_len, method, initial_omega, sink=None):
     return result.x
 
 
-def makeCentralSink(matrix_len, max_count):
-    """Make a sink of the number of elements in the center."""
-    sink = np.zeros(shape=(matrix_len, matrix_len))
-    i = int(matrix_len / 2)
-    j = int(matrix_len / 2)
-    r = 0  # Radius.
-    count = 0
-
-    def countDone(i_, j_):
-        """Set sink at given (i, j) and return if we're finished."""
-        sink[i_][j_] = True
-        nonlocal count
-        count += 1
-        return count == max_count
-
-    # Increase radius every timestep.
-    while True:
-        if r == 0:
-            if countDone(i, j): return sink
-        else:
-            # Iterate j from j-r to j+r with i set to i-r and i+1.
-            for new_j in range(j-r, j+r+1):
-                if countDone(i-r, new_j): return sink
-                if countDone(i+r, new_j): return sink
-            # Iterate i from i-r+1 to i+r-1 with j set to j-r and j+1.
-            # The additional ones in the iteration avoid duplicate corners.
-            for new_i in range(i-r+1, i+r-1+1):
-               if countDone(new_i, j-r): return sink
-               if countDone(new_i, j+r): return sink
-        r += 1
-
-
 def makeRectangleSinks(matrix_len, total_size, rec_size=4):
     """Sinks of given total size, each a 4 square rectangle."""
+
     sink = np.zeros(shape=(matrix_len, matrix_len))
     max_recs = math.ceil(total_size / rec_size)
     max_recs_on_row = math.ceil(math.sqrt(max_recs))
     print("matrix_len = {} total_size = {} rec_size = {} max_recs = {} max_recs_on_row = {}"
           .format(matrix_len, total_size, rec_size, max_recs, max_recs_on_row))
-
 
     count = 0
     def countDone(i_, j_):
@@ -352,16 +320,15 @@ def makeRectangleSinks(matrix_len, total_size, rec_size=4):
 
     for ith_row in range(1, max_recs_on_row + 1):
         for jth_col in range(1, max_recs_on_row + 1):
-            print("(row, col) = ({}, {})".format(ith_row, jth_col))
-            # Make a rectangle.
             margin = 2
-            i = int((matrix_len - (2 * margin)) * (ith_row / max_recs_on_row) + margin)
-            j = int((matrix_len - (2 * margin)) * (jth_col / max_recs_on_row) + margin)
-            print("(i, j) = ({}, {})".format(i, j))
+            # Calculate the top left coordinate of the rectangle.
+            i = int(((matrix_len - 1) - (2 * margin)) * (ith_row / max_recs_on_row) + margin)
+            j = int(((matrix_len - 1) - (2 * margin)) * (jth_col / max_recs_on_row) + margin)
             if countDone(i, j): return sink
             if countDone(i, j+1): return sink
             if countDone(i+1, j): return sink
             if countDone(i+1, j+1): return sink
+
 
 def plotEffectOfSinks():
     """Plot the effect of sinks on time to converge and optimal omega."""
@@ -373,6 +340,7 @@ def plotEffectOfSinks():
 
     # A list of sinks of increasing size.
     sinks = [makeRectangleSinks(N, size) for size in range(1, 25+1)]
+    print(sinks[-1])
     sink_sizes = [np.sum(sink) for sink in sinks]
 
     # These will be filled in by the simulations.
