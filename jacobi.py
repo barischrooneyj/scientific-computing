@@ -89,8 +89,6 @@ def sor(matrix_len, matrix, threshold, omega, sink=None):
         for j in range(matrix_len):
 
             prev_value = matrix[i][j]
-            print("Previous value = {}".format(prev_value))
-            print("Omega = {}".format(omega))
             if sink is None or not sink[i][j]:
                 matrix[i][j] = (omega * 0.25 * (
                     matrix[i + 1][j]
@@ -102,8 +100,6 @@ def sor(matrix_len, matrix, threshold, omega, sink=None):
                 matrix[i][j] = 0
 
             if abs(matrix[i][j] - prev_value) > threshold:
-                print("threshold = {}".format(threshold))
-                print("abs diff = {}".format(abs(matrix[i][j] - prev_value)))
                 terminate = False
 
     return (matrix, terminate)
@@ -128,9 +124,7 @@ def finalMatrix(matrix_len=50, threshold=10 ** -5, sink=None, method=jacobi):
     counter = 0
     while (not terminate):
         matrix, terminate = method(matrix_len, matrix, threshold, sink)
-        print("After iteration {} terminate = {}".format(counter, terminate))
         counter += 1
-        print(counter)
 
     return matrix, counter
 
@@ -291,15 +285,20 @@ def plotTimeToConverge():
         )
 
 
-def findOptimalOmega(matrix_len, method, initial_omega=1.8, sink=None):
+def findOptimalOmega(matrix_len, method, initial_omega, sink=None):
     """Return the optimal omega using scipy.optimize."""
-    f = lambda omega: finalMatrix(
-        matrix_len=matrix_len,
-        method=lambda ml, m, t, s: method(ml, m, t, omega, s),
-        sink=sink
-    )[1]
-    result = optimize.minimize(f, x0=initial_omega)
-    print("Optimal omega = {}".format(result.x))
+    def f(omega):
+        print("optimize.minimize.f: omega = {}".format(omega))
+        result = finalMatrix(
+            matrix_len=matrix_len,
+            method=lambda ml, m, t, s: method(ml, m, t, omega, s),
+            sink=sink
+        )
+        print("result[1] = {}".format(result[1]))
+        return result[1]
+    result = optimize.minimize_scalar(f, bracket=(1.5, 1.7, 1.95))
+    print("Optimal omega = {}".format(result.x[0]))
+    return result.x[0]
 
 
 def plotEffectOfSinks():
@@ -324,6 +323,7 @@ def plotEffectOfSinks():
     # For each sink sun simulation and record results.
     for i, sink in enumerate(sinks):
 
+        print("\nFinding iterations")
         matrix, simulation_iterations = finalMatrix(
             matrix_len=N,
             threshold=2 * np.finfo(np.float32).eps,
@@ -331,16 +331,16 @@ def plotEffectOfSinks():
             method=lambda ml, m, t, s: sor(ml, m, t, default_omega, s)
         )
         iterations.append(simulation_iterations)
-        print(simulation_iterations)
 
+        print("\nFinding optimal omega")
         optimal_omegas.append(findOptimalOmega(
             matrix_len=N,
             initial_omega=default_omega,
             sink=sink,
-            method=lambda ml, m, t, s: sor(ml, m, t, s)
+            method=sor
         ))
         print("Sink {} size {} iterations {} optimal omega {}".format(
-            i, sink_sizes[i], iterations, optimal_omegas[-1]))
+            i, sink_sizes[i], iterations[i], optimal_omegas[i]))
 
     print(sink_sizes)
     print(iterations)
