@@ -296,7 +296,7 @@ def findOptimalOmega(matrix_len, method, initial_omega, sink=None):
         )
         print("result[1] = {}".format(result[1]))
         return result[1]
-    result = optimize.minimize_scalar(f, tol=0.00001, bracket=(1.5, 1.7, 1.95))
+    result = optimize.minimize_scalar(f, tol=0.0001, bracket=(1.5, 1.7, 1.95))
     print("Optimal result.x = {}".format(result.x))
     return result.x
 
@@ -333,6 +333,35 @@ def makeCentralSink(matrix_len, max_count):
         r += 1
 
 
+def makeRectangleSinks(matrix_len, total_size, rec_size=4):
+    """Sinks of given total size, each a 4 square rectangle."""
+    sink = np.zeros(shape=(matrix_len, matrix_len))
+    max_recs = math.ceil(total_size / rec_size)
+    max_recs_on_row = math.ceil(math.sqrt(max_recs))
+    print("matrix_len = {} total_size = {} rec_size = {} max_recs = {} max_recs_on_row = {}"
+          .format(matrix_len, total_size, rec_size, max_recs, max_recs_on_row))
+
+
+    count = 0
+    def countDone(i_, j_):
+        """Set sink at given (i, j) and return if we're finished."""
+        sink[i_][j_] = True
+        nonlocal count
+        count += 1
+        return count == total_size
+
+    for ith_row in range(1, max_recs_on_row + 1):
+        for jth_col in range(1, max_recs_on_row + 1):
+            print("(row, col) = ({}, {})".format(ith_row, jth_col))
+            # Make a rectangle.
+            margin = 2
+            i = int((matrix_len - (2 * margin)) * (ith_row / max_recs_on_row) + margin)
+            j = int((matrix_len - (2 * margin)) * (jth_col / max_recs_on_row) + margin)
+            print("(i, j) = ({}, {})".format(i, j))
+            if countDone(i, j): return sink
+            if countDone(i, j+1): return sink
+            if countDone(i+1, j): return sink
+            if countDone(i+1, j+1): return sink
 
 def plotEffectOfSinks():
     """Plot the effect of sinks on time to converge and optimal omega."""
@@ -343,9 +372,7 @@ def plotEffectOfSinks():
     default_omega = 1.8
 
     # A list of sinks of increasing size.
-    sinks = [makeCentralSink(N, size) for size in range(1, 25+1)]
-    print(sinks[-1])
-    return
+    sinks = [makeRectangleSinks(N, size) for size in range(1, 25+1)]
     sink_sizes = [np.sum(sink) for sink in sinks]
 
     # These will be filled in by the simulations.
