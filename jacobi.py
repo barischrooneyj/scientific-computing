@@ -81,6 +81,7 @@ def sor(matrix_len, matrix, threshold, omega, sink=None):
 
     """
 
+    # Assume termination until we find a cell above threshold.
     terminate = True
 
     # For all rows but top and bottom.
@@ -88,7 +89,9 @@ def sor(matrix_len, matrix, threshold, omega, sink=None):
         for j in range(matrix_len):
 
             prev_value = matrix[i][j]
-            if sink is not None and not sink[i][j]:
+            print("Previous value = {}".format(prev_value))
+            print("Omega = {}".format(omega))
+            if sink is None or not sink[i][j]:
                 matrix[i][j] = (omega * 0.25 * (
                     matrix[i + 1][j]
                     + matrix[i - 1][j]
@@ -99,6 +102,8 @@ def sor(matrix_len, matrix, threshold, omega, sink=None):
                 matrix[i][j] = 0
 
             if abs(matrix[i][j] - prev_value) > threshold:
+                print("threshold = {}".format(threshold))
+                print("abs diff = {}".format(abs(matrix[i][j] - prev_value)))
                 terminate = False
 
     return (matrix, terminate)
@@ -112,8 +117,10 @@ def getInitialMatrix(matrix_len):
     return matrix
 
 
-def finalMatrix(matrix_len=50, threshold=10 ** -5, method=jacobi, sink=None):
+def finalMatrix(matrix_len=50, threshold=10 ** -5, sink=None, method=jacobi):
     """Run a simulation until convergence."""
+    print("finalMatrix: N = {} threshold = {} method = {} sink_size = {}".format(
+        matrix_len, threshold, method, 0 if sink is None else np.sum(sink)))
 
     matrix = getInitialMatrix(matrix_len)
 
@@ -121,7 +128,9 @@ def finalMatrix(matrix_len=50, threshold=10 ** -5, method=jacobi, sink=None):
     counter = 0
     while (not terminate):
         matrix, terminate = method(matrix_len, matrix, threshold, sink)
+        print("After iteration {} terminate = {}".format(counter, terminate))
         counter += 1
+        print(counter)
 
     return matrix, counter
 
@@ -282,11 +291,15 @@ def plotTimeToConverge():
         )
 
 
-def findOptimalOmega(matrix_len, method, initial_omega=1.8):
+def findOptimalOmega(matrix_len, method, initial_omega=1.8, sink=None):
     """Return the optimal omega using scipy.optimize."""
-    f = lambda omega: finalMatrix(matrix_len=matrix_len, method=method)[1]
+    f = lambda omega: finalMatrix(
+        matrix_len=matrix_len,
+        method=lambda ml, m, t, s: method(ml, m, t, omega, s),
+        sink=sink
+    )[1]
     result = optimize.minimize(f, x0=initial_omega)
-    print(result.x)
+    print("Optimal omega = {}".format(result.x))
 
 
 def plotEffectOfSinks():
@@ -295,7 +308,7 @@ def plotEffectOfSinks():
     N = 20
     delta_t = 0.001
     final_time = 1
-    method = sor
+    default_omega = 1.8
 
     # A list of different sinks.
     sinks = [
@@ -312,14 +325,22 @@ def plotEffectOfSinks():
     for i, sink in enumerate(sinks):
 
         matrix, simulation_iterations = finalMatrix(
-            matrix_len=N, sink=sink, method=method)
+            matrix_len=N,
+            threshold=2 * np.finfo(np.float32).eps,
+            sink=sink,
+            method=lambda ml, m, t, s: sor(ml, m, t, default_omega, s)
+        )
         iterations.append(simulation_iterations)
+        print(simulation_iterations)
 
-        optimal_omega = findOptimalOmega(N, method, initial_omega=1.8)
-        optimal_omegas.append(optimal_omega)
-
+        optimal_omegas.append(findOptimalOmega(
+            matrix_len=N,
+            initial_omega=default_omega,
+            sink=sink,
+            method=lambda ml, m, t, s: sor(ml, m, t, s)
+        ))
         print("Sink {} size {} iterations {} optimal omega {}".format(
-            i, sink_sizes[i], iterations, optimal_omega))
+            i, sink_sizes[i], iterations, optimal_omegas[-1]))
 
     print(sink_sizes)
     print(iterations)
@@ -327,12 +348,12 @@ def plotEffectOfSinks():
 
     plt.plot(sink_sizes, iterations)
     plt.title("Timesteps as a function of sink size")
-    plt.show()
-    plt.close()
+    # plt.show()
+    # plt.close()
 
     plt.plot(sink_sizes, optimal_omegas)
     plt.title("Optimal omega as a function of sink size")
-    plt.show()
+    # plt.show()
 
 
 if __name__ == "__main__":
