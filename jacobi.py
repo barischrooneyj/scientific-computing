@@ -398,12 +398,10 @@ def imshowSinks(matrix_len, amount_sinks):
 
 
 if __name__ == "__main__":
-    # plotTimeToConverge()
-    # plotAnalyticalSolutionsForJacobi()
-    # plotTValues()
-
-    if sys.argv[1] == "J":
-        plotEffectOfSinks(plot_iterations=True, plot_omega=False)
-        imshowSinks(30, 36)
-        imshowSinks(30, 37)
+    plotEffectOfSinks(plot_iterations=True, plot_omega=False)
+    imshowSinks(30, 36)
+    imshowSinks(30, 37)
+    plotTimeToConverge()
+    plotAnalyticalSolutionsForJacobi()
+    plotTValues()
 
