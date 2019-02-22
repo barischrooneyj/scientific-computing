@@ -7,7 +7,7 @@ from matplotlib import cm
 from matplotlib.animation import FuncAnimation, writers
 
 
-def getStringMatrix(L=1, N=500, endTime=800, c=1, deltaT=0.001,
+def getStringMatrix(L=1, N=500, endTime=1000, c=1, deltaT=0.001,
                     phi_func=lambda x: math.sin(2 * math.pi * x)):
     """A matrix, indexed first by time step then by x coordinate."""
 
@@ -69,10 +69,8 @@ if __name__ == "__main__":
          lambda x: math.sin(5 * math.pi * x) if (0.2 < x and 0.4 > x) else 0)
     ]
 
-    # Generate a plot for each of the three setups.
-    time_fractions = np.linspace(0, 1, 30)
-
     # For each Phi function.
+    time_fractions = np.linspace(0, 1, 30)
     for (filename, title, phi_func) in titles_and_phi_funcs:
         stringMatrix = getStringMatrix(phi_func=phi_func)
         colors = [cm.jet(x) for x in np.linspace(0.2, 0.8, len(stringMatrix))]
@@ -98,6 +96,7 @@ if __name__ == "__main__":
 
     # For each Phi function generate an animation.
     for (filename, title, phi_func) in titles_and_phi_funcs:
+        plt.close()
         ani = animate(getStringMatrix(phi_func=phi_func))
         ani.save(filename + ".mp4", writer=writer)
         print("Saved {}.mp4".format(filename))
