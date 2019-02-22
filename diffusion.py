@@ -128,6 +128,7 @@ def plotAtTimes(grid, N, times=[0.001, 0.01, 0.1, 1.0], show=False, save=False):
     plt.ylabel("Height")
     plt.legend()
     if save:
+        print("Saving concentration-plot.png")
         plt.savefig("concentration-plot.png", bbox_inches="tight")
     if show:
         plt.show()
