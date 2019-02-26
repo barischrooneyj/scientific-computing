@@ -32,15 +32,15 @@ def grow(eta=0.5, omega=1.8, start=(8, 9),
             method=lambda ml, m, t, s: sor(ml, m, t, omega, s),
             sink=sink
         )
-        densitymap = makePossibilties(result[0], sink1)
+        densitymap = makePossibilties(result[0], sink)
         densitymap = [[i, j, c] for [i, j, c] in densitymap if c > minimum_c]
         print("density map after removal = {}".format(densitymap))
         new_sink = newgrowth(eta, densitymap)
-        sink1[new_sink[0]][new_sink[1]] = True
+        sink[new_sink[0]][new_sink[1]] = True
         matrix = result[0]
 
     print(matrix)
-    print("Num cells = {}".format(np.sum(sink1)))
+    print("Num cells = {}".format(np.sum(sink)))
 
 
 def newgrowth(eta, densitymap):
