@@ -32,7 +32,7 @@ def grow(eta=0.5, omega=1.8, start=(8, 9),
             method=lambda ml, m, t, s: sor(ml, m, t, omega, s),
             sink=sink
         )
-        densitymap = makePossibilties(result[0], sink)
+        densitymap = growthCandidates(result[0], sink)
         densitymap = [[i, j, c] for [i, j, c] in densitymap if c > minimum_c]
         print("density map after removal = {}".format(densitymap))
         new_sink = newgrowth(eta, densitymap)
