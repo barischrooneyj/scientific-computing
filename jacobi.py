@@ -7,71 +7,81 @@ import scipy.optimize as optimize
 
 
 def jacobi(matrix_len, prev_matrix, threshold, sink=None):
-    """A new matrix based on matrix at previous time.
-
-    Supports an optional sink argument as a matrix of dimensions (matrix_len,
-    matrix_len).
-
-    """
-
-    new_matrix = np.zeros(shape=(matrix_len, matrix_len))
-
-    # Top and bottom rows.
-    new_matrix[0] = [1] * matrix_len
-    new_matrix[-1] = [0] * matrix_len
-
-    terminate = True
-
-    # For all rows but top and bottom.
-    for i in range(1, matrix_len - 1):
-        for j in range(matrix_len):
-
-            if sink is not None and not sink[i][j]:
-                new_matrix[i][j] = 0.25 * (
-                    prev_matrix[i + 1][j]
-                    + prev_matrix[i - 1][j]
-                    + prev_matrix[i][(j + 1) % matrix_len]
-                    + prev_matrix[i][(j - 1) % matrix_len]
-                )
-            else:
-                new_matrix[i][j] = 0
-
-
-            if abs(prev_matrix[i][j] - new_matrix[i][j]) > threshold:
-                terminate = False
-
-    return (new_matrix, terminate)
+	"""A new matrix based on matrix at previous time.
+	
+	Supports an optional sink argument as a matrix of dimensions (matrix_len,
+	matrix_len).
+	
+	"""
+	
+	new_matrix = np.zeros(shape=(matrix_len, matrix_len))
+	
+	# Top and bottom rows.
+	new_matrix[0] = [1] * matrix_len
+	new_matrix[-1] = [0] * matrix_len
+	
+	terminate = True
+	
+	# For all rows but top and bottom.
+	for i in range(1, matrix_len - 1):
+		for j in range(matrix_len):
+	
+			if sink is not None and not sink[i][j]:
+				new_matrix[i][j] = 0.25 * (
+					prev_matrix[i + 1][j]
+					+ prev_matrix[i - 1][j]
+					+ prev_matrix[i][(j + 1) % matrix_len]
+					+ prev_matrix[i][(j - 1) % matrix_len]
+				)
+			else:
+				prev_value = matrix[i][j]
+				new_matrix[i][j] = 0
+	
+	
+			if abs(prev_matrix[i][j] - new_matrix[i][j]) > threshold:
+				terminate = False
+	
+	return (new_matrix, terminate)
 
 
 def gaussSeidel(matrix_len, matrix, threshold, sink=None):
-    """A new matrix based on matrix at previous time, updated in place.
-
-    Supports an optional sink argument as a matrix of dimensions (matrix_len,
-    matrix_len).
-
-    """
-
-    terminate = True
-
-    # For all rows but top and bottom.
-    for i in range(1, matrix_len - 1):
-        for j in range(matrix_len):
-
-            prev_value = matrix[i][j]
-            if sink is not None and not sink[i][j]:
-                matrix[i][j] = 0.25 * (
-                    matrix[i + 1][j]
-                    + matrix[i - 1][j]
-                    + matrix[i][(j + 1) % matrix_len]
-                    + matrix[i][(j - 1) % matrix_len]
-                )
-            else:
-                new_matrix[i][j] = 0
-
-            if abs(matrix[i][j] - prev_value) > threshold:
-                terminate = False
-
-    return (matrix, terminate)
+	"""A new matrix based on matrix at previous time, updated in place.
+	
+	Supports an optional sink argument as a matrix of dimensions (matrix_len,
+	matrix_len).
+	
+	"""
+	
+	terminate = True
+	
+	# For all rows but top and bottom.
+	for i in range(1, matrix_len - 1):
+		for j in range(matrix_len):
+	
+			prev_value = matrix[i][j]
+			if sink is None:
+				matrix[i][j] = 0.25 * (
+					matrix[i + 1][j]
+					+ matrix[i - 1][j]
+					+ matrix[i][(j + 1) % matrix_len]
+					+ matrix[i][(j - 1) % matrix_len]
+				)
+			else:
+				if sink[i][j]:
+					matrix[i][j] = 0
+				else:
+					matrix[i][j] = 0.25 * (
+					matrix[i + 1][j]
+					+ matrix[i - 1][j]
+					+ matrix[i][(j + 1) % matrix_len]
+					+ matrix[i][(j - 1) % matrix_len]
+				)
+			
+			#print(matrix[i][j], prev_value)
+			if abs(matrix[i][j] - prev_value) > threshold:
+				terminate = False
+	
+	return (matrix, terminate)
 
 
 def sor(matrix_len, matrix, threshold, omega, sink=None):
@@ -396,12 +406,107 @@ def imshowSinks(matrix_len, amount_sinks):
     plt.imshow(makeRectangleSinks(matrix_len, amount_sinks))
     plt.show()
 
+	
+def grow():
+	"""Start at one spot and grow a tree"""
+	
+	eta = 0.5
+	omega = 1.8
+	minimum_c = 10 ** - 5
+	matrix_len = 100
+	
+	start = (8, 9)
+	object = []
+	object.append(start)
+	
+	sink1 = makeSink(matrix_len = matrix_len, sinks = object)
+	
+	matrix = getInitialMatrix(matrix_len)
+	for _ in range(70):
+		result = updateMatrix(matrix = matrix, method=lambda ml, m, t, s: sor(ml, m, t, omega, s), sink=sink1) # sink here
+		densitymap = makePossibilties(result[0], sink1)
+		densitymap = [[i, j, c] for [i, j, c] in densitymap if c > minimum_c]
+		print("density map after removal = {}".format(densitymap))
+		new_sink = newgrowth(eta, densitymap)
+		sink1[new_sink[0]][new_sink[1]] = True
+		matrix = result[0]
+	
+	print(matrix)
+	print("Num cells = {}".format(np.sum(sink1)))
+	
+	
+def newgrowth(eta, densitymap):
+
+	cTotal = 0
+	for el in densitymap:
+		print("el[2] {}".format(el[2]))
+		el[2] = el[2] ** eta 
+		cTotal += el[2] 
+	print(cTotal)
+	chanches = []
+	for el in densitymap:
+		chanches.append(el[2] / cTotal)
+	
+	print(np.cumsum(chanches))
+	
+	
+	number = np.random.random()
+	for index, value in enumerate(np.cumsum(chanches)):
+		
+		if value > number:
+			return (densitymap[index][0], densitymap[index][1])
+			
+	print("Check this", chanches)
+		
+	
+def makePossibilties(heatmap, sinks):
+	"""Return a list of coordinates of new growth candidates."""
+	print(heatmap, sinks)
+	poslist = []
+	N = len(heatmap)
+	print("len(heatmap) = {}".format(N))
+	for i in range(len(heatmap)):
+		for j in range(len(heatmap[0])):
+			# Assume initially not a growth candidate.
+			possibility = False
+			# Becomes a candidate if a sink is a neighbour.
+			for di, dj in [[1, 0], [-1, 0], [0, 1], [0, -1]]:
+				try:
+					if sinks[(i + di) % N][(j + dj) % N]:
+						possibility = True
+						print(i,j)
+				except:
+					pass
+			# A sink is not a candidate.
+			if sinks[i][j]:
+				possibility = False
+			# Update the list of candidates.
+			if possibility:
+				poslist.append([i, j, heatmap[i][j]])
+				
+	return poslist
+	
+	
+def updateMatrix(matrix,  threshold=10 ** -5, sink=None, method=jacobi):
+	"""Run a simulation until convergence."""
+	#print("finalMatrix: N = {} threshold = {} method = {} sink_size = {}".format(
+	#    matrix_len, threshold, method, 0 if sink is None else np.sum(sink)))
+	
+	terminate = False
+	counter = 0
+	while (not terminate):
+		matrix, terminate = method(len(matrix), matrix, threshold, sink)
+		counter += 1
+		print(counter)
+	
+	return matrix, counter	
 
 if __name__ == "__main__":
-    plotEffectOfSinks(plot_iterations=True, plot_omega=False)
-    imshowSinks(30, 36)
-    imshowSinks(30, 37)
-    plotTimeToConverge()
-    plotAnalyticalSolutionsForJacobi()
-    plotTValues()
+    #plotEffectOfSinks(plot_iterations=True, plot_omega=False)
+    #imshowSinks(30, 36)
+    #imshowSinks(30, 37)
+    #plotTimeToConverge()
+    #plotAnalyticalSolutionsForJacobi()
+    #plotTValues()
+	grow() 
 
