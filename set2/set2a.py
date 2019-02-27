@@ -68,11 +68,10 @@ def newgrowth(eta, densitymap):
 
 def growthCandidates(heatmap, sinks):
     """Return a list of coordinates of new growth candidates."""
-    print(heatmap, sinks)
     poslist = []
     N = len(heatmap)
-    print("len(heatmap) = {}".format(N))
 
+    # Look for a candidate at each position.
     for i in range(len(heatmap)):
         for j in range(len(heatmap[0])):
             # Assume initially not a growth candidate.
@@ -96,13 +95,13 @@ def growthCandidates(heatmap, sinks):
 
 
 def updateMatrix(matrix,  threshold=10 ** -5, sink=None, method=jacobi):
-    """Run a simulation until convergence."""
+    """Run a simulation until convergence returning final matrix and counter."""
     #print("finalMatrix: N = {} threshold = {} method = {} sink_size = {}".format(
     #    matrix_len, threshold, method, 0 if sink is None else np.sum(sink)))
 
     terminate = False
     counter = 0
-    while (not terminate):
+    while not terminate:
         matrix, terminate = method(len(matrix), matrix, threshold, sink)
         counter += 1
         print(counter)
