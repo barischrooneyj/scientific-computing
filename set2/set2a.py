@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 
 from methods import jacobi, sor
 
@@ -28,9 +29,9 @@ def getAnalyticMatrix(matrix_len):
     return matrix
 
 
-def grow(eta=0.5, omega=1.8, matrix_len=30,
+def grow(eta=1, omega=1.8, matrix_len=100,
          minimum_c=10**-5, start=None,
-         save=True, load=False, max_sinks = 100):
+         save=True, load=False, show=True, max_sinks = 1000):
 
     """Start at one spot and grow a tree"""
     if start is None:
@@ -78,16 +79,23 @@ def grow(eta=0.5, omega=1.8, matrix_len=30,
             np.savetxt(f, matrix)
         print("Saved matrix to {}".format(fname))
 
-
-    #for i in range(matrix_len)):
-    #    for j in range(len(matrix[0])):
-            
-            
-    #plt.show()
-
     if show:
-        plt.imshow(matrix)
+        for i in range(matrix_len):
+            for j in range(matrix_len):
+                if sink[i][j]:
+                    matrix[i][j] = -1
+    
+        
+        print(matrix)
+        masked_array = np.ma.masked_where(matrix == -1, matrix)
+    
+        cmap = matplotlib.cm.coolwarm 
+        cmap.set_bad(color='white')
+        
+        plt.imshow(masked_array, cmap=cmap)
         plt.show()
+
+
 
 
 
