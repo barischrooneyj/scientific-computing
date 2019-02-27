@@ -1,14 +1,15 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Top row i = 0.
 # Left column j = 0.
 
-PRINT = True
+DEBUG = False
 
 
 def p(s):
-    """Print if PRINT is true."""
-    if PRINT:
+    """Print if DEBUG is true."""
+    if DEBUG:
         print(s)
 
 
@@ -79,7 +80,7 @@ def walkerSimulation(matrix_len, initial_walker, max_walkers, prob_stick,
     matrix = initialWalkerMatrix(matrix_len, initial_walker)
     p("Initial walker matrix = \n{}".format(matrix))
     for t in range(max_walkers):
-        p("Looking for walker at time {}".format(t))
+        print("Looking for walker at time {}".format(t))
         i, j = newWalker(matrix, prob_stick)
         matrix[i][j] = True
         p("Matrix after time {} =\n{}".format(t, matrix))
@@ -94,9 +95,9 @@ def walkerSimulation(matrix_len, initial_walker, max_walkers, prob_stick,
 
 
 if __name__ == "__main__":
-    matrix_len = 100
-    initial_walker = (-1, 49)
-    max_walkers = 1000
+    matrix_len = 20
+    initial_walker = (-1, 9)
+    max_walkers = 100
     probs_stick = [0.1, 0.3, 0.5, 0.7, 0.9, 1]
 
     for prob_stick in probs_stick:
@@ -106,5 +107,7 @@ if __name__ == "__main__":
             max_walkers,
             prob_stick=prob_stick,
             save=True,
-            load=False
+            load=True
         )
+        plt.imshow(matrix)
+        plt.show()
