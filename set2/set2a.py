@@ -27,12 +27,12 @@ def getAnalyticMatrix(matrix_len):
         matrix[i] = [(matrix_len - 1 - i) / (matrix_len - 1)] * matrix_len
     return matrix
 
-def grow(eta=0.5, omega=1.8, matrix_len=100,
+def grow(eta=0.5, omega=1.8, matrix_len=30,
          minimum_c=10**-5, start=None,
-         save=True, load=False, max_sinks = 70):
+         save=True, load=False, max_sinks = 100):
     """Start at one spot and grow a tree"""
     if start is None:
-        start = (matrix_len - 1, int(matrix_len / 2))
+        start = (matrix_len - 2, int(matrix_len / 2))
         
     fname = "eta-{}-omega-{}-start-{}-min-c-{}-mlen-{}.csv".format(
         eta, omega, start, minimum_c, matrix_len)
@@ -51,6 +51,7 @@ def grow(eta=0.5, omega=1.8, matrix_len=100,
     # If didn't load matrix from file.
     if matrix is None:
         sink = makeSink(matrix_len=matrix_len, sinks=[start])
+        print(sink)
         matrix = getAnalyticMatrix(matrix_len)
 
         for _ in range(max_sinks):
@@ -67,6 +68,7 @@ def grow(eta=0.5, omega=1.8, matrix_len=100,
             matrix = result[0]
     print(matrix)
     print("Num cells = {}".format(np.sum(sink)))
+    print(sink)
 
     # Save the result
     if save:
@@ -74,8 +76,11 @@ def grow(eta=0.5, omega=1.8, matrix_len=100,
             np.savetxt(f, matrix)
         print("Saved matrix to {}".format(fname))
 
-    plt.imshow(matrix)
-    plt.show()
+    #for i in range(matrix_len)):
+    #    for j in range(len(matrix[0])):
+            
+            
+    #plt.show()
 
 
 def newgrowth(eta, densitymap):
