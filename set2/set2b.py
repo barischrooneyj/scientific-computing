@@ -43,10 +43,17 @@ def newWalker(matrix, prob_stick=1):
         return False
 
     def newPosition(i, j):
-        """Walk one cell, left, right, up or down."""
+        """Walk one cell, left, right, up or down.
+
+        If the new position is a sink then try again.
+        """
         deltas = [(0, -1), (0, 1), (1, 0), (-1, 0)]
         di, dj = deltas[np.random.choice(len(deltas))]
-        return (i + di, (j + dj) % matrix_len)
+        new_i, new_j = i + di, (j + dj) % matrix_len
+        # If a sink try another position.
+        if matrix[new_i][new_j]:
+            return newPosition(i, j)
+        return (new_i, new_j)
 
     # Create a new walker until one reaches the cluster.
     while True:

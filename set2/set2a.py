@@ -27,9 +27,11 @@ def getAnalyticMatrix(matrix_len):
         matrix[i] = [(matrix_len - 1 - i) / (matrix_len - 1)] * matrix_len
     return matrix
 
+
 def grow(eta=0.5, omega=1.8, matrix_len=30,
          minimum_c=10**-5, start=None,
          save=True, load=False, max_sinks = 100):
+
     """Start at one spot and grow a tree"""
     if start is None:
         start = (matrix_len - 2, int(matrix_len / 2))
@@ -76,11 +78,17 @@ def grow(eta=0.5, omega=1.8, matrix_len=30,
             np.savetxt(f, matrix)
         print("Saved matrix to {}".format(fname))
 
+
     #for i in range(matrix_len)):
     #    for j in range(len(matrix[0])):
             
             
     #plt.show()
+
+    if show:
+        plt.imshow(matrix)
+        plt.show()
+
 
 
 def newgrowth(eta, densitymap):
@@ -150,4 +158,9 @@ def updateMatrix(matrix,  threshold=10 ** -5, sink=None, method=jacobi):
 
 
 if __name__ == "__main__":
-    grow()
+
+    # Save simulations varying eta.
+    etas = list(np.arange(0, 2.1, 0.1))
+    print("etas = {}".format(etas))
+    for eta in etas:
+        grow(eta=eta, save=True)
