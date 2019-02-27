@@ -1,8 +1,8 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 from methods import jacobi, sor
 
-import matplotlib.cm as cm
 
 
 def makeSink(matrix_len, sinks=[]):
@@ -19,38 +19,59 @@ def getInitialMatrix(matrix_len):
     matrix[0] = [1] * matrix_len
     matrix[-1] = [0] * matrix_len
     return matrix
-	
+
 def getAnalyticMatrix(matrix_len):
-	"""Return the t = 0 matrix with 1 at the top and 0s at the bottom."""
-	matrix = np.zeros(shape=(matrix_len, matrix_len))
-	for i in range(matrix_len):
-		matrix[i] = [(matrix_len - 1 - i) / (matrix_len - 1)] * matrix_len
-	return matrix
+    """Return the t = 0 matrix with 1 at the top and 0s at the bottom."""
+    matrix = np.zeros(shape=(matrix_len, matrix_len))
+    for i in range(matrix_len):
+        matrix[i] = [(matrix_len - 1 - i) / (matrix_len - 1)] * matrix_len
+    return matrix
 
 def grow(eta=0.5, omega=1.8, start=(8, 9),
-		minimum_c=10**-5, matrix_len=100):
-	"""Start at one spot and grow a tree"""
-	
-	sink = makeSink(matrix_len=matrix_len, sinks=[start])
-	matrix = getAnalyticMatrix(matrix_len)
-	
-	for _ in range(70):
-		result = updateMatrix(
-			matrix = matrix,
-			method=lambda ml, m, t, s: sor(ml, m, t, omega, s),
-			sink=sink
-		)
-		densitymap = growthCandidates(result[0], sink)
-		densitymap = [[i, j, c] for [i, j, c] in densitymap if c > minimum_c]
-		print("density map after removal = {}".format(densitymap))
-		new_sink = newgrowth(eta, densitymap)
-		sink[new_sink[0]][new_sink[1]] = True
-		matrix = result[0]
-	
-	print(matrix)
-	print("Num cells = {}".format(np.sum(sink)))
-	plt.imshow(matrix)
-	plt.show()
+         minimum_c=10**-5, matrix_len=20,
+         save=True, load=False):
+    """Start at one spot and grow a tree"""
+    fname = "eta-{}-omega-{}-start-{}-min-c-{}-mlen-{}.csv".format(
+        eta, omega, start, minimum_c, matrix_len)
+
+    # Load and return previous results if possible.
+    matrix = None
+    if load:
+        try:
+            with open(fname) as f:
+                print("Loaded matrix from {}".format(fname))
+                matrix = np.loadtxt(f)
+        except FileNotFoundError:
+            print("Could not load matrix from {}".format(fname))
+
+    # If didn't load matrix from file.
+    if matrix is None:
+        sink = makeSink(matrix_len=matrix_len, sinks=[start])
+        matrix = getAnalyticMatrix(matrix_len)
+
+        for _ in range(70):
+            result = updateMatrix(
+                matrix = matrix,
+                method=lambda ml, m, t, s: sor(ml, m, t, omega, s),
+                sink=sink
+            )
+            densitymap = growthCandidates(result[0], sink)
+            densitymap = [[i, j, c] for [i, j, c] in densitymap if c > minimum_c]
+            print("density map after removal = {}".format(densitymap))
+            new_sink = newgrowth(eta, densitymap)
+            sink[new_sink[0]][new_sink[1]] = True
+            matrix = result[0]
+    print(matrix)
+    print("Num cells = {}".format(np.sum(sink)))
+
+    # Save the result
+    if save:
+        with open(fname, "w") as f:
+            np.savetxt(f, matrix)
+        print("Saved matrix to {}".format(fname))
+
+    plt.imshow(matrix)
+    plt.show()
 
 
 def newgrowth(eta, densitymap):
@@ -121,4 +142,3 @@ def updateMatrix(matrix,  threshold=10 ** -5, sink=None, method=jacobi):
 
 if __name__ == "__main__":
     grow()
-	
