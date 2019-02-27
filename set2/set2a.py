@@ -27,12 +27,16 @@ def getAnalyticMatrix(matrix_len):
         matrix[i] = [(matrix_len - 1 - i) / (matrix_len - 1)] * matrix_len
     return matrix
 
-def grow(eta=0.5, omega=1.8, start=(8, 9),
-         minimum_c=10**-5, matrix_len=20,
-         save=True, load=False):
+def grow(eta=0.5, omega=1.8, matrix_len=100,
+         minimum_c=10**-5, start=None,
+         save=True, load=False, max_sinks = 70):
     """Start at one spot and grow a tree"""
+    if start is None:
+        start = (matrix_len - 1, int(matrix_len / 2))
+        
     fname = "eta-{}-omega-{}-start-{}-min-c-{}-mlen-{}.csv".format(
         eta, omega, start, minimum_c, matrix_len)
+
 
     # Load and return previous results if possible.
     matrix = None
@@ -49,7 +53,7 @@ def grow(eta=0.5, omega=1.8, start=(8, 9),
         sink = makeSink(matrix_len=matrix_len, sinks=[start])
         matrix = getAnalyticMatrix(matrix_len)
 
-        for _ in range(70):
+        for _ in range(max_sinks):
             result = updateMatrix(
                 matrix = matrix,
                 method=lambda ml, m, t, s: sor(ml, m, t, omega, s),
