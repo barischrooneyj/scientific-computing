@@ -79,7 +79,7 @@ def gaussSeidel(matrix_len, matrix, threshold, sink=None):
     return (matrix, terminate)
 
 
-@numba.jit(nopython=True, parallel=True)
+# @numba.jit(nopython=True, parallel=True)
 def sor(matrix_len, matrix, threshold, omega, sink=None):
     """A new matrix based on matrix at previous time, successive over relaxation.
 
