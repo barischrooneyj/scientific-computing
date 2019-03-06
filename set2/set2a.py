@@ -230,7 +230,8 @@ def plotGrowths(matrix_len=100, start=1.2, stop=2, step=0.3):
     print("etas = {}".format(etas))
     for eta in etas:
         print("eta = {}".format(np.around(eta, 4)))
-        grow(eta=eta, matrix_len=100, max_sinks=1000, load=True, show=True)
+        grow(eta=eta, matrix_len=100, max_sinks=1000,
+             load=True, show=True, save=True)
 
 
 def findOptimalOmega(matrix, method, sink=None):
