@@ -48,6 +48,7 @@ def grow(eta=0.5, omega=1.8, matrix_len=100, stop_at_top=True,
     # Load and return previous results if possible.
     matrix = None
     sink = None
+    loaded = False
     if load:
         try:
             with open("simulations/" + fname) as f:
@@ -55,6 +56,7 @@ def grow(eta=0.5, omega=1.8, matrix_len=100, stop_at_top=True,
             with open("simulations/" + fname + ".sink") as f:
                 sink = np.loadtxt(f)
             print("Loaded concentrations and sinks from \nsimulations/{}(.sink)".format(fname))
+            loaded = True
         except FileNotFoundError:
             print("Could not load concentrations and sinks from \nsimulations/{}(.sink)".format(fname))
 
@@ -80,8 +82,8 @@ def grow(eta=0.5, omega=1.8, matrix_len=100, stop_at_top=True,
                 break
             matrix = result[0]
 
-    # Save the result
-    if save:
+    # Save the result.
+    if not loaded and save:
         with open("simulations/" + fname, "w") as f:
             np.savetxt(f, matrix)
         with open("simulations/" + fname + ".sink", "w") as f:
@@ -89,23 +91,24 @@ def grow(eta=0.5, omega=1.8, matrix_len=100, stop_at_top=True,
         print("Saved concentrations and sinks to \nsimulations/{}(.sink)".format(
             fname))
 
-    # Set sinks to a negative value for greater colour contrast.
-    for i in range(matrix_len):
-        for j in range(matrix_len):
-            if sink[i][j]:
-                matrix[i][j] = -1
+    if save or show:
+        # Set sinks to a negative value for greater colour contrast.
+        for i in range(matrix_len):
+            for j in range(matrix_len):
+                if sink[i][j]:
+                    matrix[i][j] = -1
 
-    masked_array = np.ma.masked_where(matrix == -1, matrix)
+        masked_array = np.ma.masked_where(matrix == -1, matrix)
 
-    cmap = matplotlib.cm.coolwarm
-    cmap.set_bad(color="white")
+        cmap = matplotlib.cm.coolwarm
+        cmap.set_bad(color="white")
 
-    plt.imshow(masked_array, cmap=cmap)
-    plt.xticks([x for x in range(0, matrix_len, 10)] + [matrix_len - 1])
-    plt.yticks([x for x in range(0, matrix_len, 10)] + [matrix_len - 1])
-    plt.xlabel("Spatial dimension x")
-    plt.ylabel("Spatial dimension y")
-    plt.title("DLA, η = {:.1f}, cells grown = {}".format(eta, int(np.sum(sink) - 1)))
+        plt.imshow(masked_array, cmap=cmap)
+        plt.xticks([x for x in range(0, matrix_len, 10)] + [matrix_len - 1])
+        plt.yticks([x for x in range(0, matrix_len, 10)] + [matrix_len - 1])
+        plt.xlabel("Spatial dimension x")
+        plt.ylabel("Spatial dimension y")
+        plt.title("DLA, η = {:.1f}, cells grown = {}".format(eta, int(np.sum(sink) - 1)))
 
     if show:
         plt.show()
@@ -193,7 +196,7 @@ def plotImpactOfEta(matrix_len=100, start=1.2, stop=12, step=0.3, repeat=3):
             print("Running repeat {} for eta {}".format(r, eta))
             cells_grown[e][r] =  grow(
                 eta=eta, matrix_len=matrix_len, max_sinks=matrix_len ** 2,
-                load=True, show=False,
+                load=True, save=False, show=False,
                 fname_append="" if r == 0 else "-{}".format(r)
             )
     plt.close()
@@ -204,16 +207,23 @@ def plotImpactOfEta(matrix_len=100, start=1.2, stop=12, step=0.3, repeat=3):
     plt.title("Growths per container height, varying η")
     plt.xlabel("η")
     plt.ylabel("Growths when top reached / container height")
+    fname = "images/2a-eta-impact-start-{}-stop-{}-step-{}-repeat-{}-N-{}.png".format(
+        start, stop, step, repeat, matrix_len)
+    plt.savefig(fname)
+    print("Saved image to {}".format(fname))
     plt.show()
+
+
+def plotGrowths(matrix_len=100, start=1.2, stop=2, step=0.3):
+    """Plot the growth of DLA for various values of eta."""
+    etas = list(np.arange(0, 12.1, 0.3))
+    print("etas = {}".format(etas))
+    for eta in etas:
+        print("eta = {}".format(np.around(eta, 4)))
+        grow(eta=eta, matrix_len=100, max_sinks=1000, load=True, show=True)
 
 
 if __name__ == "__main__":
 
-    plotImpactOfEta()
-    # Save simulations varying eta.
-    # etas = list(np.arange(0, 12.1, 0.3))
-    # print("etas = {}".format(etas))
-    # for eta in etas:
-    #     eta = np.around(eta, 4)
-    #     print("eta = {}".format(eta))
-    #     grow(eta=eta, matrix_len=100, max_sinks=1000, load=True, show=True)
+    # plotGrowths()
+    plotImpactOfEta(start=4.2)
