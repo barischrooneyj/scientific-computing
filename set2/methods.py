@@ -1,4 +1,5 @@
 import numpy as np
+import numba
 
 
 def jacobi(matrix_len, prev_matrix, threshold, sink=None):
@@ -78,6 +79,7 @@ def gaussSeidel(matrix_len, matrix, threshold, sink=None):
     return (matrix, terminate)
 
 
+@numba.jit(nopython=True, parallel=True)
 def sor(matrix_len, matrix, threshold, omega, sink=None):
     """A new matrix based on matrix at previous time, successive over relaxation.
 
@@ -85,13 +87,17 @@ def sor(matrix_len, matrix, threshold, omega, sink=None):
     matrix_len).
 
     """
+    start_i = 1
+    start_j = 0
+    end_i = matrix_len - 2
+    end_j = matrix_len - 1
 
     # Assume termination until we find a cell above threshold.
     terminate = True
 
     # For all rows but top and bottom.
-    for i in range(1, matrix_len - 1):
-        for j in range(matrix_len):
+    for i in range(start_i, end_i + 1):
+        for j in range(start_j, end_j + 1):
 
             prev_value = matrix[i][j]
             if sink is None or not sink[i][j]:
