@@ -118,11 +118,11 @@ def grow(eta=0.5, omega=1.8, matrix_len=100, stop_at_top=True,
         plt.ylabel("Spatial dimension y")
         plt.title("DLA, η = {:.1f}, cells grown = {}".format(eta, int(np.sum(sink) - 1)))
 
-    if show:
-        plt.show()
     if save:
         plt.savefig("images/{}.png".format(fname[:-4]))
         print("Saved image to\nimages/{}.png".format(fname))
+    if show:
+        plt.show()
 
     if find_optimal_omega:
         return np.sum(sink) - 1, optimal_omegas
@@ -246,21 +246,23 @@ def findOptimalOmega(matrix, method, sink=None):
         print("optimize.minimize.f: omega = {} f(omega) = {}".format(
             omega, result[1]))
         return result[1]
-    result = optimize.minimize_scalar(f, tol=0.001, bracket=(0.5, 1.7, 1.98))
+    result = optimize.minimize_scalar(f, tol=0.0001, bracket=(0.5, 1.7, 1.98))
     return result.x
 
 
 def plotOptimalOmegas():
     """Run DLA, plotting optimal omega at each time."""
-    optimal_omegas = grow(eta=1.8, matrix_len=50, max_sinks=50, load=False,
-        show=True, find_optimal_omega=True, save=False)[1]
-    optimal_omegas = [x[1] for x in optimal_omegas]
+    # optimal_omegas = grow(eta=1.8, matrix_len=50, max_sinks=50, load=False,
+    #     show=True, find_optimal_omega=True, save=False)[1]
+    # optimal_omegas = [x[1] for x in optimal_omegas]
+    optimal_omegas = [1.7352135305972203, 1.5270140722651815, 1.838773703969942, 1.8546435032562565, 1.5279373692637577, 1.8477520264415432, 1.8684972365424553, 1.8537981322071575, 1.8703731883606691, 1.8450853986724152, 1.8593565044879161, 1.7716581220003396, 1.702517951569727, 1.8804608387161705, 1.8789206133160787, 1.8858898788221845, 1.7029800731167497, 1.8843820864359113, 1.7864746042177557, 1.5279373692637577, 1.8749225624792765, 1.6832364036425498, 1.8825626368374337, 1.8687383985568362, 1.8803285983464948, 1.8789816035148612, 1.8705934530148827, 1.880787437592131, 1.8099305531167498, 1.8693052869599303, 1.8615066610958402, 1.8604791930511717, 1.8255344177696295, 1.8693052869599303, 1.8671045794515249, 1.5279373692637577, 1.8487447278411695, 1.8625954110509721, 1.8495682668608207, 1.8528630625931646, 1.8589488238373295, 1.8544898348449717, 1.8522991020116453, 1.8539021457656442, 1.4957412641058694, 1.8638505280655788, 1.8472648937804752, 1.8709163147886447, 1.860459905286849]
     print("optimal omegas = {}".format(optimal_omegas))
     plt.plot(list(range(len(optimal_omegas))), optimal_omegas)
+    plt.show()
 
 
 if __name__ == "__main__":
 
-    plotGrowths(start=0, stop=1.2)
+    # plotGrowths(start=0, stop=1.2)
     # plotImpactOfEta(start=4.2)
-    # plotOptimalOmegas()
+    plotOptimalOmegas()
