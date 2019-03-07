@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 # Top row i = 0.
 # Left column j = 0.
@@ -75,18 +76,18 @@ def newWalker(matrix, start_i, prob_stick=1):
 def walkerSimulation(matrix_len, initial_walker, max_walkers, prob_stick,
                      save=True, load=False, show=False):
     """Return a matrix after a random walker simulation."""
-    fname = "len-{}-init-{}-max-{}-ps-{}.csv".format(
+    fname = "2b-len-{}-init-{}-max-{}-ps-{}.csv".format(
         matrix_len, initial_walker, max_walkers, prob_stick)
 
     matrix = None
     # Load and return previous results.
     if load:
         try:
-            with open(fname) as f:
+            with open("simulations/" + fname) as f:
                 matrix = np.loadtxt(f)
-                print("Loaded matrix from {}".format(fname))
+                print("Loaded matrix from {}".format("simulations/" + fname))
         except FileNotFoundError:
-            print("Could not load matrix from {}".format(fname))
+            print("Could not load matrix from {}".format("simulations/" + fname))
 
     # If matrix not loaded form file, run the simulation.
     if matrix is None:
@@ -94,36 +95,49 @@ def walkerSimulation(matrix_len, initial_walker, max_walkers, prob_stick,
         start_i = initial_walker[0] - 1  # Start row above initial walker.
         print("start _i = {}".format(start_i))
         p("Initial walker matrix = \n{}".format(matrix))
-        for t in range(max_walkers):
+        t = 0;
+        while True:
             i, j = newWalker(matrix, start_i=start_i, prob_stick=prob_stick)
             print("walker {} found cluster, start_i = {}, i = {}".format(
                 t, start_i, i))
             matrix[i][j] = True
+            if i == 0:
+                print("Growth reached the top")
+                break
             # Start random walker row above the growth.
             start_i = min(max(0, i - 1), start_i)
             p("Matrix after time {} =\n{}".format(t, matrix))
-            if start_i == 0:
-                print("Growth reached the top")
+            t += 1
+            if t == max_walkers:
+                print("Max walkers reached")
                 break
 
     # Save the result.
     if save:
-        with open(fname, "w") as f:
+        with open("simulations/" + fname, "w") as f:
             np.savetxt(f, matrix)
-        print("Saved matrix to {}".format(fname))
+        print("Saved matrix to {}".format("simulations/" + fname))
 
     # Plot and save/show result.
     plt.imshow(matrix)
+    masked_array = np.ma.masked_where(matrix == True, matrix)
+    cmap = cm.coolwarm
+    cmap.set_bad(color="white")
+
+    plt.imshow(masked_array, cmap=cmap)
+    plt.xticks([x for x in range(0, matrix_len, 10)] + [matrix_len - 1])
+    plt.yticks([x for x in range(0, matrix_len, 10)] + [matrix_len - 1])
+    plt.xlabel("Index i, spatial dimension x")
+    plt.ylabel("Index j, spatial dimension y")
+    plt.title("{} random walkers, ps = {}".format(
+        int(np.sum(matrix) - 1), prob_stick))
+
     if show:
         plt.show()
     if save:
-        fname = "results/{}.png".format(fname[:-4])
-        plt.title("{} random walkers, ps = {}".format(
-            int(np.sum(matrix) - 1), prob_stick))
-        plt.xlabel("Spatial dimension x")
-        plt.ylabel("Spatial dimension y")
-        plt.savefig(fname)
-        print("Saved plot to {}".format(fname))
+        sname = "images/{}.png".format(fname[:-4])
+        plt.savefig(sname)
+        print("Saved plot to {}".format(sname))
 
     return matrix
 
@@ -131,8 +145,8 @@ def walkerSimulation(matrix_len, initial_walker, max_walkers, prob_stick,
 if __name__ == "__main__":
     matrix_len = 100
     initial_walker = (matrix_len - 1, int(matrix_len / 2))
-    max_walkers = 1000
-    probs_stick = [0.001, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+    max_walkers = None
+    probs_stick = [0.001, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
 
     for prob_stick in probs_stick:
         matrix = walkerSimulation(
@@ -142,5 +156,5 @@ if __name__ == "__main__":
             prob_stick=prob_stick,
             save=True,
             load=True,
-            show=False
+            show=True
         )
