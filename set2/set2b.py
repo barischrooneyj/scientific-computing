@@ -132,12 +132,12 @@ def walkerSimulation(matrix_len, initial_walker, max_walkers, prob_stick,
     plt.title("{} random walkers, ps = {}".format(
         int(np.sum(matrix) - 1), prob_stick))
 
-    if show:
-        plt.show()
     if save:
         sname = "images/{}.png".format(fname[:-4])
         plt.savefig(sname)
         print("Saved plot to {}".format(sname))
+    if show:
+        plt.show()
 
     return matrix
 
@@ -145,7 +145,7 @@ def walkerSimulation(matrix_len, initial_walker, max_walkers, prob_stick,
 if __name__ == "__main__":
     matrix_len = 100
     initial_walker = (matrix_len - 1, int(matrix_len / 2))
-    max_walkers = None
+    max_walkers = 1000
     probs_stick = [0.001, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
 
     for prob_stick in probs_stick:
@@ -156,5 +156,5 @@ if __name__ == "__main__":
             prob_stick=prob_stick,
             save=True,
             load=True,
-            show=True
+            show=False
         )
