@@ -74,10 +74,10 @@ def newWalker(matrix, start_i, prob_stick=1):
 
 
 def walkerSimulation(matrix_len, initial_walker, max_walkers, prob_stick,
-                     save=True, load=False, show=False):
+                     save=True, load=False, show=False, fappend=""):
     """Return a matrix after a random walker simulation."""
-    fname = "2b-len-{}-init-{}-max-{}-ps-{}.csv".format(
-        matrix_len, initial_walker, max_walkers, prob_stick)
+    fname = "2b-len-{}-init-{}-max-{}-ps-{}{}.csv".format(
+        matrix_len, initial_walker, max_walkers, prob_stick, fappend)
 
     matrix = None
     # Load and return previous results.
@@ -113,7 +113,7 @@ def walkerSimulation(matrix_len, initial_walker, max_walkers, prob_stick,
                 break
 
     # Save the result.
-    if save:
+    if save and not load:
         with open("simulations/" + fname, "w") as f:
             np.savetxt(f, matrix)
         print("Saved matrix to {}".format("simulations/" + fname))
@@ -142,19 +142,46 @@ def walkerSimulation(matrix_len, initial_walker, max_walkers, prob_stick,
     return matrix
 
 
+def plotGrowthHeightRatio(x, simulations, matrix_len, start_i=0):
+    """Plot #growths to reach the top / container height for simulations."""
+    x = x[start_i:]
+    simulations = simulations[start_i:]
+    plt.close()
+    plt.plot(x, [np.mean([np.sum(matrix) / matrix_len for matrix in ps_simulations])
+                 for ps_simulations in simulations], label="mean")
+    plt.plot(x, [np.max([np.sum(matrix) / matrix_len for matrix in ps_simulations])
+                 for ps_simulations in simulations], label="max")
+    plt.plot(x, [np.min([np.sum(matrix) / matrix_len for matrix in ps_simulations])
+                 for ps_simulations in simulations], label="min")
+    plt.title("Growths per container height, varying ps")
+    plt.xlabel("Stick probability ps")
+    plt.ylabel("Growths when top reached / container height")
+    plt.legend()
+    plt.show()
+    plt.savefig("images/2b-height-varying-ps-start_i{}.png".format(start_i))
+
+
 if __name__ == "__main__":
     matrix_len = 100
     initial_walker = (matrix_len - 1, int(matrix_len / 2))
-    max_walkers = 1000
+    max_walkers = None
     probs_stick = [0.001, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
 
+    simulations = []
     for prob_stick in probs_stick:
-        matrix = walkerSimulation(
-            matrix_len,
-            initial_walker,
-            max_walkers,
-            prob_stick=prob_stick,
-            save=True,
-            load=True,
-            show=False
-        )
+        ps_simulations = []
+        for fappend in ["", "-1", "-2", "-3", "-4"]:
+            ps_simulations.append(walkerSimulation(
+                matrix_len,
+                initial_walker,
+                max_walkers,
+                prob_stick=prob_stick,
+                save=True,
+                load=True,
+                show=False,
+                fappend=fappend
+            ))
+        simulations.append(ps_simulations)
+
+    plotGrowthHeightRatio(probs_stick, simulations, matrix_len)
+    plotGrowthHeightRatio(probs_stick, simulations, matrix_len, start_i=4)
