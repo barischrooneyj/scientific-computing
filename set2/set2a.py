@@ -304,18 +304,23 @@ def findOptimalOmega(matrix, method, sink=None):
 
 def plotOptimalOmegas(optimal_omegas=None):
     """Run DLA, plotting optimal omega at each time."""
+    plt.close()
+    eta = 4.2
     if not optimal_omegas:
         optimal_omegas = grow(eta=4.2, matrix_len=50, max_sinks=None, load=False,
                             show=True, find_optimal_omega=True, save=True)[1]
-    print("optimal omegas = {}".format(optimal_omegas))
-    plt.close()
+    plt.title("Optimal omega for each timestep, η = {}".format(eta))
+    plt.xlabel("timestep t")
+    plt.ylabel("Optimal omega")
     plt.plot(list(range(len(optimal_omegas))), optimal_omegas)
+    plt.savefig("images/optimal-omegas.png")
     plt.show()
 
 
 if __name__ == "__main__":
 
-    plotGrowths(start=0, stop=1.2)
-    plotImpactOfEta(start=0, repeat=5)
-    plotImpactOfEta(start=1.2, repeat=5)
-    plotOptimalOmegas(optimal_omegas=[x[1] for x in optimalomegas.optimal_omegas])
+    # plotGrowths(start=0, stop=1.2)
+    # plotImpactOfEta(start=0, repeat=5)
+    # plotImpactOfEta(start=1.2, repeat=5)
+    # plotOptimalOmegas(optimal_omegas=[x[1] for x in optimalomegas.optimal_omegas])
+    plotOptimalOmegas()
