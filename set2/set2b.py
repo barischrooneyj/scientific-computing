@@ -127,8 +127,8 @@ def walkerSimulation(matrix_len, initial_walker, max_walkers, prob_stick,
     plt.imshow(masked_array, cmap=cmap)
     plt.xticks([x for x in range(0, matrix_len, 10)] + [matrix_len - 1])
     plt.yticks([x for x in range(0, matrix_len, 10)] + [matrix_len - 1])
-    plt.xlabel("Index i, spatial dimension x")
-    plt.ylabel("Index j, spatial dimension y")
+    plt.xlabel("Space index j")
+    plt.ylabel("Space index i")
     plt.title("{} random walkers, ps = {}".format(
         int(np.sum(matrix) - 1), prob_stick))
 
@@ -170,7 +170,7 @@ if __name__ == "__main__":
     simulations = []
     for prob_stick in probs_stick:
         ps_simulations = []
-        for fappend in ["", "-1", "-2", "-3", "-4"]:
+        for fappend in [""]:
             ps_simulations.append(walkerSimulation(
                 matrix_len,
                 initial_walker,
@@ -178,7 +178,7 @@ if __name__ == "__main__":
                 prob_stick=prob_stick,
                 save=True,
                 load=True,
-                show=False,
+                show=True,
                 fappend=fappend
             ))
         simulations.append(ps_simulations)

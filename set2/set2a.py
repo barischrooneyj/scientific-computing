@@ -45,6 +45,8 @@ def grow(eta=0.5, omega=1.8, matrix_len=100, stop_at_top=True, method=sor,
     """
     if start is None:
         start = (matrix_len - 1, int(matrix_len / 2))
+    if max_sinks is None:
+        max_sinks = matrix_len ** 2
 
     fname = "2a-eta-{}-omega-{}-start-{}-min-c-{}-mlen-{}-max_sinks-{}{}.csv".format(
         np.around(eta, 4), omega, start, minimum_c, matrix_len, max_sinks,
@@ -75,7 +77,7 @@ def grow(eta=0.5, omega=1.8, matrix_len=100, stop_at_top=True, method=sor,
         matrix = getAnalyticMatrix(matrix_len)
         sink = makeSink(matrix_len=matrix_len, sinks=[start])
 
-        for t in range(max_sinks if max_sinks is not None else matrix_len ** 2):
+        for t in range(max_sinks):
             print("Running SOR at t = {}".format(t))
             if not loaded and t != 0 and find_optimal_omega:
                 omega = findOptimalOmega(matrix, method, sink)
@@ -121,8 +123,8 @@ def grow(eta=0.5, omega=1.8, matrix_len=100, stop_at_top=True, method=sor,
         plt.xticks([x for x in range(0, matrix_len, 10)] + [matrix_len - 1])
         plt.yticks([x for x in range(0, matrix_len, 10)] + [matrix_len - 1])
         plt.colorbar()
-        plt.xlabel("Spatial dimension x")
-        plt.ylabel("Spatial dimension y")
+        plt.xlabel("Space index j")
+        plt.ylabel("Space index i")
         plt.title("DLA, η = {:.1f}, cells grown = {}".format(eta, int(np.sum(sink) - 1)))
 
     if save:
@@ -231,13 +233,14 @@ def plotImpactOfEta(matrix_len=100, start=1.2, stop=12, step=0.3, repeat=3):
     plt.show()
 
 
-def plotGrowths(matrix_len=100, start=1.2, stop=2, step=0.3):
+def plotGrowths(matrix_len=100, start=1.2, stop=2, step=0.3, max_sinks=None):
     """Plot the growth of DLA for various values of eta."""
     etas = list(np.arange(0, 12.1, 0.3))
     print("etas = {}".format(etas))
+    etas = [0.0, 0.6, 1.5, 4.5]
     for eta in etas:
         print("eta = {}".format(np.around(eta, 4)))
-        grow(eta=eta, matrix_len=100, max_sinks=1000,
+        grow(eta=eta, matrix_len=100, max_sinks=max_sinks,
              load=True, show=True, save=True)
 
 
@@ -321,8 +324,9 @@ def plotOptimalOmegas(optimal_omegas=None):
 
 if __name__ == "__main__":
 
-    # plotGrowths(start=0, stop=1.2)
-    # plotImpactOfEta(start=0, repeat=5)
-    # plotImpactOfEta(start=1.2, repeat=5)
-    # plotOptimalOmegas(optimal_omegas=[x[1] for x in optimalomegas.optimal_omegas])
+    plotOptimalOmegas(optimal_omegas=[x[1] for x in optimalomegas.optimal_omegas])
     plotOptimalOmegas()
+    plotGrowths(start=0, stop=1.2)
+    plotGrowths(start=0, stop=1.2, max_sinks=1000)
+    plotImpactOfEta(start=0, repeat=5)
+    plotImpactOfEta(start=1.2, repeat=5)
