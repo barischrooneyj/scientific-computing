@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from jumba import jit
+from numba import jit
 
 
 def makeStartGrid(matrix_len = 100, u_init = 0.5, v_init = 0.25):
