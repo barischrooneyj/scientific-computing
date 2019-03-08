@@ -157,8 +157,8 @@ def plotGrowthHeightRatio(x, simulations, matrix_len, start_i=0):
     plt.xlabel("Stick probability ps")
     plt.ylabel("Growths when top reached / container height")
     plt.legend()
-    plt.show()
     plt.savefig("images/2b-height-varying-ps-start_i{}.png".format(start_i))
+    plt.show()
 
 
 if __name__ == "__main__":

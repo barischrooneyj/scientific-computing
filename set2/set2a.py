@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 import scipy.optimize as optimize
 
-from methods import jacobi, sor
+from methods import jacobi, numbaSor, sor
+import optimalomegas
 
 
 def makeSink(matrix_len, sinks=[]):
@@ -30,7 +31,7 @@ def getAnalyticMatrix(matrix_len):
     return matrix
 
 
-def grow(eta=0.5, omega=1.8, matrix_len=100, stop_at_top=True,
+def grow(eta=0.5, omega=1.8, matrix_len=100, stop_at_top=True, method=sor,
          minimum_c=10**-5, start=None, show=False, fname_append="",
          save=True, load=False, max_sinks = 200, find_optimal_omega=False):
     """Start at one spot and grow a tree.
@@ -45,8 +46,9 @@ def grow(eta=0.5, omega=1.8, matrix_len=100, stop_at_top=True,
     if start is None:
         start = (matrix_len - 1, int(matrix_len / 2))
 
-    fname = "2a-eta-{}-omega-{}-start-{}-min-c-{}-mlen-{}{}.csv".format(
-        np.around(eta, 4), omega, start, minimum_c, matrix_len, fname_append)
+    fname = "2a-eta-{}-omega-{}-start-{}-min-c-{}-mlen-{}-max_sinks-{}{}.csv".format(
+        np.around(eta, 4), omega, start, minimum_c, matrix_len, max_sinks,
+        fname_append)
 
     matrix = None
     sink = None
@@ -59,25 +61,29 @@ def grow(eta=0.5, omega=1.8, matrix_len=100, stop_at_top=True,
                 matrix = np.loadtxt(f)
             with open("simulations/" + fname + ".sink") as f:
                 sink = np.loadtxt(f)
-            print("Loaded concentrations and sinks from \nsimulations/{}(.sink)".format(fname))
+            with open("simulations/" + fname + ".optimal-omegas") as f:
+                optimal_omegas = np.loadtxt(f)
+            print("Loaded concentrations and sinks from " +
+                  "\nsimulations/{}(.sink)(optimal-omegas)".format(fname))
             loaded = True
         except FileNotFoundError:
-            print("Could not load concentrations and sinks from \nsimulations/{}(.sink)".format(fname))
+            print("Could not load concentrations and sinks from " +
+                  "\nsimulations/{}(.sink)(optimal-omegas)".format(fname))
 
     # If didn't load matrix from file.
     if matrix is None:
         matrix = getAnalyticMatrix(matrix_len)
         sink = makeSink(matrix_len=matrix_len, sinks=[start])
 
-        for t in range(max_sinks):
+        for t in range(max_sinks if max_sinks is not None else matrix_len ** 2):
             print("Running SOR at t = {}".format(t))
-            if t != 0 and find_optimal_omega:
-                omega = findOptimalOmega(matrix, sor, sink)
+            if not loaded and t != 0 and find_optimal_omega:
+                omega = findOptimalOmega(matrix, method, sink)
                 print("Optimal omega = {} at t = {}".format(omega, t))
                 optimal_omegas.append((t, omega))
             result = updateMatrix(
                 matrix = matrix,
-                method=lambda ml, m, t, s: sor(ml, m, t, omega, s),
+                method=lambda ml, m, t, s: method(ml, m, t, omega, s),
                 sink=sink
             )
             print("Looking for growth candidate at t = {}".format(t))
@@ -120,7 +126,7 @@ def grow(eta=0.5, omega=1.8, matrix_len=100, stop_at_top=True,
 
     if save:
         plt.savefig("images/{}.png".format(fname[:-4]))
-        print("Saved image to\nimages/{}.png".format(fname))
+        print("Saved image to\nimages/{}.png".format(fname[:-4]))
     if show:
         plt.show()
 
@@ -206,7 +212,7 @@ def plotImpactOfEta(matrix_len=100, start=1.2, stop=12, step=0.3, repeat=3):
             print("Running repeat {} for eta {}".format(r, eta))
             cells_grown[e][r] =  grow(
                 eta=eta, matrix_len=matrix_len, max_sinks=matrix_len ** 2,
-                load=True, save=False, show=False,
+                load=True, save=True, show=False, method=numbaSor,
                 fname_append="" if r == 0 else "-{}".format(r)
             )
     plt.close()
@@ -236,6 +242,7 @@ def plotGrowths(matrix_len=100, start=1.2, stop=2, step=0.3):
 
 def findOptimalOmega(matrix, method, sink=None):
     """Return the optimal omega using scipy.optimize."""
+
     def f(omega):
         """Return timesteps to converge for a given omega."""
         result = updateMatrix(
@@ -246,23 +253,69 @@ def findOptimalOmega(matrix, method, sink=None):
         print("optimize.minimize.f: omega = {} f(omega) = {}".format(
             omega, result[1]))
         return result[1]
-    result = optimize.minimize_scalar(f, tol=0.0001, bracket=(0.5, 1.7, 1.98))
-    return result.x
+
+    scipy_result = optimize.minimize_scalar(
+        f, tol=0.01, bracket=(0.5, 1.7, 1.98))
+
+    best_omega = scipy_result.x
+    best_time = scipy_result.fun
+    print("best omega = {}, best time = {}".format(
+        best_omega, best_time))
+
+    # Decrease omega while f(omega) does not increase.
+    delta = 0.01
+    while True:
+        lower_omega = scipy_result.x  - delta
+        print("Trying lower omega {} - {} = {}".format(
+            scipy_result.x, delta, lower_omega))
+        time_for_lower_omega = f(lower_omega)
+        print("Time for lower omega = {}, scipy.fun = {}".format(
+            lower_omega, time_for_lower_omega))
+        if time_for_lower_omega > best_time:
+            print("Breaking from decrease of omega")
+            break
+        else:
+            print("Found better omega = {} t = {}".format(
+                lower_omega, time_for_lower_omega))
+            best_omega = lower_omega
+            best_time = time_for_lower_omega
+        delta += 0.01
+
+    # Increase omega while f(omega) decreases.
+    delta = 0.01
+    while True:
+        higher_omega = scipy_result.x  + delta
+        print("Trying higher omega {} + {} = {}".format(
+            scipy_result.x, delta, higher_omega))
+        time_for_higher_omega = f(higher_omega)
+        print("Time for higher omega = {}, scipy.fun = {}".format(
+            higher_omega, time_for_higher_omega))
+        if time_for_higher_omega < best_time:
+            print("Found better omega = {} t = {}".format(
+                higher_omega, time_for_higher_omega))
+            best_omega = higher_omega
+            best_time = time_for_higher_omega
+        else:
+            print("Breaking from increase of omega")
+            break
+        delta += 0.01
+    return best_omega
 
 
-def plotOptimalOmegas():
+def plotOptimalOmegas(optimal_omegas=None):
     """Run DLA, plotting optimal omega at each time."""
-    optimal_omegas = grow(eta=1.8, matrix_len=50, max_sinks=100, load=False,
-        show=True, find_optimal_omega=True, save=False)[1]
-    # optimal_omegas = [x[1] for x in optimal_omegas]
-    # optimal_omegas = [1.7352135305972203, 1.5270140722651815, 1.838773703969942, 1.8546435032562565, 1.5279373692637577, 1.8477520264415432, 1.8684972365424553, 1.8537981322071575, 1.8703731883606691, 1.8450853986724152, 1.8593565044879161, 1.7716581220003396, 1.702517951569727, 1.8804608387161705, 1.8789206133160787, 1.8858898788221845, 1.7029800731167497, 1.8843820864359113, 1.7864746042177557, 1.5279373692637577, 1.8749225624792765, 1.6832364036425498, 1.8825626368374337, 1.8687383985568362, 1.8803285983464948, 1.8789816035148612, 1.8705934530148827, 1.880787437592131, 1.8099305531167498, 1.8693052869599303, 1.8615066610958402, 1.8604791930511717, 1.8255344177696295, 1.8693052869599303, 1.8671045794515249, 1.5279373692637577, 1.8487447278411695, 1.8625954110509721, 1.8495682668608207, 1.8528630625931646, 1.8589488238373295, 1.8544898348449717, 1.8522991020116453, 1.8539021457656442, 1.4957412641058694, 1.8638505280655788, 1.8472648937804752, 1.8709163147886447, 1.860459905286849]
+    if not optimal_omegas:
+        optimal_omegas = grow(eta=4.2, matrix_len=50, max_sinks=None, load=False,
+                            show=True, find_optimal_omega=True, save=True)[1]
     print("optimal omegas = {}".format(optimal_omegas))
+    plt.close()
     plt.plot(list(range(len(optimal_omegas))), optimal_omegas)
     plt.show()
 
 
 if __name__ == "__main__":
 
-    # plotGrowths(start=0, stop=1.2)
-    # plotImpactOfEta(start=4.2)
-    plotOptimalOmegas()
+    plotGrowths(start=0, stop=1.2)
+    plotImpactOfEta(start=0, repeat=5)
+    plotImpactOfEta(start=1.2, repeat=5)
+    plotOptimalOmegas(optimal_omegas=[x[1] for x in optimalomegas.optimal_omegas])
