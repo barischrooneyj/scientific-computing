@@ -120,6 +120,7 @@ def grow(eta=0.5, omega=1.8, matrix_len=100, stop_at_top=True, method=sor,
         plt.imshow(masked_array, cmap=cmap)
         plt.xticks([x for x in range(0, matrix_len, 10)] + [matrix_len - 1])
         plt.yticks([x for x in range(0, matrix_len, 10)] + [matrix_len - 1])
+        plt.colorbar()
         plt.xlabel("Spatial dimension x")
         plt.ylabel("Spatial dimension y")
         plt.title("DLA, η = {:.1f}, cells grown = {}".format(eta, int(np.sum(sink) - 1)))
@@ -305,15 +306,16 @@ def findOptimalOmega(matrix, method, sink=None):
 def plotOptimalOmegas(optimal_omegas=None):
     """Run DLA, plotting optimal omega at each time."""
     plt.close()
-    eta = 4.2
+    eta = 1.2
     if not optimal_omegas:
-        optimal_omegas = grow(eta=4.2, matrix_len=50, max_sinks=None, load=False,
+        optimal_omegas = grow(eta=eta, matrix_len=50, max_sinks=None, load=False,
                             show=True, find_optimal_omega=True, save=True)[1]
     plt.title("Optimal omega for each timestep, η = {}".format(eta))
     plt.xlabel("timestep t")
     plt.ylabel("Optimal omega")
     plt.plot(list(range(len(optimal_omegas))), optimal_omegas)
     plt.savefig("images/optimal-omegas.png")
+    print(optimal_omegas)
     plt.show()
 
 
