@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 L = 1
-dx = 0.25
-dy = 0.25
+dx = 0.05
+dy = 0.05
 Ni = int(L/dx)
 Nj = int(L/dy)
 if Ni != L/dx: raise Exception("Invalid dx value")
@@ -33,10 +33,10 @@ for i in irange:
 
             print(i , j , "Special")
             M[i * Ni + j, i * Ni + j] = -4
-            M[i * Ni + j, (i - 1) * Ni + j] = 1
             M[i * Ni + j, (i + 1) * Ni + j] = 1
-            M[i * Ni + j, i * Ni + j - 1] = 1
-            M[i * Ni + j, i * Ni + j + 1] = 1
+            M[i * Ni + j, (i - 1) * Ni + j] = 1
+            M[i * Ni + j, i * Ni + (j + 1)] = 1
+            M[i * Ni + j, i * Ni + (j - 1)] = 1
 
 
 plt.imshow(M)
@@ -52,9 +52,11 @@ def smallest_eigenvalues(eigenvalues, n=10):
 
 
 answer = np.linalg.eig(M * 1/dx**2)
+print(answer)
 eigenvalues = answer[0]
-eigenvectors = answer[1]
+eigenvectors = answer[1].T
 smallest = smallest_eigenvalues(eigenvalues, n=10)
+print(smallest)
 
 for i, eigenvalue in smallest:
     eigenvector = eigenvectors[i]
