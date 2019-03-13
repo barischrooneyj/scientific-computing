@@ -1,8 +1,13 @@
 import numpy as np
 
 
-Ni = 4
-Nj = 4
+L = 1
+dx = 0.05
+dy = 0.05
+Ni = int(L/dx)
+Nj = int(L/dy)
+if Ni != L/dx: raise Exception("Invalid dx value")
+
 
 M = np.zeros((Ni * Nj, Ni * Nj))
 v = np.zeros((Nj * Ni, 1))
@@ -23,12 +28,8 @@ def boundary(i, j, Ni = Ni, Nj = Nj):
         
 for i in irange:
     for j in jrange:
-        if boundary(i, j):
-            M[i, j * i] = 0
-            
-            print(i , j , "Boundary")
-            
-        else:
+        if not boundary(i, j):
+
             print(i , j , "Special")
             M[i * Ni + j, i * Ni + j] = -4
             M[i * Ni + j, (i - 1) * Ni + j] = 1
@@ -39,11 +40,15 @@ for i in irange:
 
             
 
-print(M)           
+#print(M)           
 
-#answer = np.linalg.eig(M)
-#
+answer = np.linalg.eig(M * 1/dx**2)
+
+print(answer[0])
+print()
+print(answer[1])
+
 #for i in range(len(answer[0])):
-#    if abs(abs(answer[0][i]) - 1) <0.0001:
+#    if abs(answer[0][i]) <0.01:
 #        print(answer[0][i], answer[1][i], np.dot(M, answer[1][i]))
-#        
+        
