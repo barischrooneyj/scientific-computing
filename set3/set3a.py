@@ -40,7 +40,7 @@ def circleBoundary(i, j, Ni, Nj):
         return True
     C = Ni // 2
     dist = np.sqrt(abs(i - C) ** 2 + abs(j - C) ** 2)
-    r = C - 2  # Allow some space on sides.
+    r = (Ni-2) / 2
     return dist > r
 
 
@@ -63,8 +63,8 @@ def plotMatrixM(M):
 
 if __name__ == "__main__":
     L = 1
-    Ni = 31
-    Nj = 31
+    Ni = 21
+    Nj = 21
     dx = L / Ni
     dy = L / Nj
 
