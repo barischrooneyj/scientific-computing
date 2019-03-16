@@ -3,12 +3,15 @@ import heapq
 import matplotlib.pyplot as plt
 import numpy as np
 
-def makeMatrixM(Ni, Nj):
+
+def makeMatrixM(Ni, Nj, boundary_func):
     M = np.zeros((Ni * Nj, Ni * Nj))
+    print(M)
 
     for i in range(Ni):
         for j in range(Nj):
-            if not boundary(i, j, Ni, Nj):
+            print("i, j = {}".format(i, j))
+            if not boundary_func(i, j, Ni, Nj):
 
                 print(i , j , "Special")
                 M[i * Ni + j, i * Ni + j] = -4
@@ -30,12 +33,16 @@ def boundary(i, j, Ni, Nj):
         return False
 
 
-def circleBoundary(i, j, Ni = 20):
-    dist = math.sqrt(abs(i - Ni) ** 2 + abs(j - Nj) ** 2)
-    if dist >= Ni / 2:
-        return False
-    else:
-        return True        
+def circleBoundary(i, j, Ni, Nj):
+    if Ni % 2 == 0:
+        raise ValueError("Circle does not have odd length")
+    if boundary(i, j, Ni, Nj):
+        return True
+    C = Ni // 2
+    dist = np.sqrt(abs(i - C) ** 2 + abs(j - C) ** 2)
+    r = C - 2  # Allow some space on sides.
+    return dist > r
+
 
 def smallest_eigenvalues(eigenvalues, n=10):
     return heapq.nsmallest(
@@ -45,21 +52,30 @@ def smallest_eigenvalues(eigenvalues, n=10):
     )
 
 
-if __name__ == "__main__":
-    L = 1
-    Ni = 6
-    Nj = 6
-    dx = L / Ni
-    dy = L / Nj
-
-    M = makeMatrixM(Ni + 2, Nj + 2)
-    v = np.zeros((Nj * Ni, 1))
+def plotMatrixM(M):
     plt.imshow(M.T)
     plt.title("Matrix M from Equation X")
     plt.ylabel("Index i")
     plt.xlabel("Index j")
     plt.savefig("results/matrix-m-{0}x{0}.png".format(Ni, Nj))
     plt.show()
+
+
+if __name__ == "__main__":
+    L = 1
+    Ni = 31
+    Nj = 31
+    dx = L / Ni
+    dy = L / Nj
+
+    # M = makeMatrixM(Ni + 2, Nj + 2, boundary)
+    # plotMatrixM(M)
+    # M = makeMatrixM(Ni + 2, 2 * Nj + 2, boundary)
+    # plotMatrixM(M)
+    M = makeMatrixM(Ni + 2, Nj + 2, circleBoundary)
+    plotMatrixM(M)
+
+    v = np.zeros((Nj * Ni, 1))
 
     answer = np.linalg.eig(M * 1/dx**2)
     eigenvalues = [x for x in answer[0] if x != 0]
