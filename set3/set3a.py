@@ -30,6 +30,13 @@ def boundary(i, j, Ni, Nj):
         return False
 
 
+def circleBoundary(i, j, Ni = 20):
+    dist = math.sqrt(abs(i - Ni) ** 2 + abs(j - Nj) ** 2)
+    if dist >= Ni / 2:
+        return False
+    else:
+        return True        
+
 def smallest_eigenvalues(eigenvalues, n=10):
     return heapq.nsmallest(
         n,
