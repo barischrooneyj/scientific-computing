@@ -34,14 +34,14 @@ def smallest_eigenvalues(eigenvalues, n=10):
     return heapq.nsmallest(
         n,
         list(enumerate(eigenvalues)),
-        key=lambda x: x[1]
+        key=lambda x: abs(x[1])
     )
 
 
 if __name__ == "__main__":
     L = 1
-    Ni = 4
-    Nj = 4
+    Ni = 6
+    Nj = 6
     dx = L / Ni
     dy = L / Nj
 
@@ -55,17 +55,15 @@ if __name__ == "__main__":
     plt.show()
 
     answer = np.linalg.eig(M * 1/dx**2)
-    print(answer)
-    eigenvalues = answer[0]
+    eigenvalues = [x for x in answer[0] if x != 0]
+    print(eigenvalues)
     eigenvectors = answer[1].T
     smallest = smallest_eigenvalues(eigenvalues, n=10)
-    print(smallest)
 
     for i, eigenvalue in smallest:
         eigenvector = eigenvectors[i]
         eigenmatrix = eigenvector.reshape(Ni+2, Nj+2)
-        print(eigenmatrix)
-        plt.imshow(eigenmatrix)
+        plt.imshow(eigenmatrix.real)
         plt.show()
         # plt.plot(list(range(len(eigenvector))), eigenvector)
         # plt.show()
