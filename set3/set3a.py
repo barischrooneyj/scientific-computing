@@ -92,14 +92,13 @@ def plotSpectrumOfEigenFrequencies(
                 pickle.dump(eigenvalues, f)
     plt.boxplot(eigenFrequencies, labels=[str(x) for x in Nis])
     plt.title("Eigenfrequencies varying discretization step")
-    plt.xlabel("Ni")
+    plt.xlabel("Ni (Maximum space index i)")
     plt.ylabel("Eigenfrequencies")
     locs, _ = plt.yticks()
     labels = ["0" if l == 0 else "{:.0E}".format(l) for l in locs]
     plt.yticks(locs, labels)
     if save:
-        plt.savefig(
-            "results/eigen-frequencies-{}.png".format(Nis).replace(" ", "-"))
+        plt.savefig("results/eigen-frequencies.png")
     if show:
         plt.show()
 
