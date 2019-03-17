@@ -53,18 +53,20 @@ def smallest_eigenvalues(eigenvalues, n=10):
     )
 
 
-def plotMatrixM(M):
+def plotMatrixM(M, Ni, Nj, show=True):
+    """Plot the given matrix using plt.imshow."""
     plt.imshow(M.T)
     plt.title("Matrix M from Equation X")
     plt.ylabel("Index i")
     plt.xlabel("Index j")
     plt.savefig("results/matrix-m-{0}x{0}.png".format(Ni, Nj))
-    plt.show()
+    if show:
+        plt.show()
 
 
 def plotSpectrumOfEigenFrequencies(
-        Nis=np.arange(9, 80, 10), load=True, save=True, show=True):
-    """Plot eigenfrequencies while varying discretization step."""
+        Nis=np.arange(9, 90, 10), load=True, save=True, show=True):
+    """3D: Plot eigenfrequencies while varying discretization step."""
     print("Nis = {}".format(Nis))
     L = 1
     eigenFrequencies = []
@@ -89,15 +91,23 @@ def plotSpectrumOfEigenFrequencies(
             with open(fname, "wb") as f:
                 pickle.dump(eigenvalues, f)
     plt.boxplot(eigenFrequencies, labels=[str(x) for x in Nis])
-    # plt.yscale("log")
-    plt.title(
-        "Eigenfrequencies varying discretization step")
+    plt.title("Eigenfrequencies varying discretization step")
+    plt.xlabel("Ni")
+    plt.ylabel("Eigenfrequencies")
+    locs, _ = plt.yticks()
+    labels = ["0" if l == 0 else "{:.0E}".format(l) for l in locs]
+    plt.yticks(locs, labels)
     if save:
-        plt.savefig("results/eigen-frequencies-{}.png".format(Nis).strip())
-    plt.show()
+        plt.savefig(
+            "results/eigen-frequencies-{}.png".format(Nis).replace(" ", "-"))
+    if show:
+        plt.show()
 
 
 if __name__ == "__main__":
+    # Question A.
+    Ni, Nj = 4, 4
+    plotMatrixM(makeMatrixM(Ni + 2, Nj + 2, boundary), Ni, Nj)
     # Question D.
     plotSpectrumOfEigenFrequencies(load=True, save=True)
 
