@@ -46,7 +46,7 @@ def circleBoundary(i, j, Ni, Nj):
 def plotMatrixM(M, Ni, Nj, fstart="", show=True, save=True):
     """Plot the given matrix M using plt.imshow."""
     plt.imshow(M.T)
-    plt.title("Matrix M from Equation 9")
+    plt.title("Matrix M from Equation 9 for a {} x {} system".format(Ni, Nj))
     plt.ylabel("Index k of matrix M")
     plt.xlabel("Index l of matrix M")
     plt.colorbar()
