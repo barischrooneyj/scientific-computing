@@ -8,13 +8,9 @@ import numpy as np
 
 def makeMatrixM(Ni, Nj, boundary_func):
     M = np.zeros((Ni * Nj, Ni * Nj))
-
     for i in range(Ni):
         for j in range(Nj):
-            # print("i, j = {}".format(i, j))
             if not boundary_func(i, j, Ni, Nj):
-
-                # print(i , j , "Special")
                 M[i * Ni + j, i * Ni + j] = -4
                 M[i * Ni + j, (i + 1) * Ni + j] = 1
                 M[i * Ni + j, (i - 1) * Ni + j] = 1
@@ -35,8 +31,10 @@ def boundary(i, j, Ni, Nj):
 
 
 def circleBoundary(i, j, Ni, Nj):
-    if Ni % 2 == 0:
+    if Ni % 2 == 0 or Nj % 2 == 0:
         raise ValueError("Circle does not have odd length")
+    if Ni != Nj:
+        raise ValueError("Circle height not equal to width")
     if boundary(i, j, Ni, Nj):
         return True
     C = Ni // 2
@@ -46,7 +44,7 @@ def circleBoundary(i, j, Ni, Nj):
 
 
 def plotMatrixM(M, Ni, Nj, fstart="", show=True, save=True):
-    """Plot the given matrix using plt.imshow."""
+    """Plot the given matrix M using plt.imshow."""
     plt.imshow(M.T)
     plt.title("Matrix M from Equation X")
     plt.ylabel("Index i")
@@ -117,9 +115,9 @@ def plot_eigenvectors_for_shapes(Ni_=29, Nj_=29, save=True, show=True):
     dy = L / Nj_
 
     for shape, Ni, Nj, boundary_f in [
-        ("square",    Ni_,    Nj_, boundary),
-        ("rectangle", 2 *Ni_, Nj_, boundary),
-        ("circle",    Ni_,    Nj_, circleBoundary)
+        ("square",      Ni_, Nj_,   boundary),
+        ("rectangular", Ni_, 2*Nj_, boundary),
+        ("circular",    Ni_, Nj_,   circleBoundary)
     ]:
         M = makeMatrixM(Ni + 2, Nj + 2, boundary_f)
         plotMatrixM(M, Ni, Nj, save=False, show=show)
@@ -134,19 +132,29 @@ def plot_eigenvectors_for_shapes(Ni_=29, Nj_=29, save=True, show=True):
             eigenmatrix = eigenvector.reshape(Ni + 2, Nj + 2)
             print("Eigenvalue {} for shape {}".format(eigenvalue, shape))
             plt.imshow(eigenmatrix.real)
-            # plt.xlabel()
+            plt.ylabel("Row index i")
+            plt.xlabel("Column index j")
+            plt.title(
+                "Eigenvector (reshaped) for eigenvalue"
+                + "\n{:.2f} for a {} x {} {} system".format(
+                    eigenvalue, Ni, Nj, shape)
+            )
+            if save:
+                plt.savefig("results/3c-eigenvector-shape-{}-eigenvector{:.2f}".format(
+                    shape, eigenvalue).replace(".", "-") + ".png")
             if show:
                 plt.show()
 
 
 if __name__ == "__main__":
     # Question A.
-    # Ni, Nj = 4, 4
-    # M = makeMatrixM(Ni + 2, Nj + 2, boundary, show=True)
-    # plotMatrixM(M, Ni, Nj, fstart="3a-")
+    Ni, Nj = 4, 4
+    M = makeMatrixM(Ni + 2, Nj + 2, boundary, show=True)
+    plotMatrixM(M, Ni, Nj, fstart="3a-")
+    # Question B.
     plot_eigenvectors_for_shapes(show=True)
     # Question D.
-    # plot_spectrum_of_eigen_frequencies(load=True, save=True, show=True)
+    plot_spectrum_of_eigen_frequencies(load=True, save=True, show=True)
 
 
 
