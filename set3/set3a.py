@@ -45,7 +45,20 @@ def circleBoundary(i, j, Ni, Nj):
     return dist > r
 
 
-def smallest_eigenvalues(eigenvalues, n=10):
+def plotMatrixM(M, Ni, Nj, fstart="", show=True, save=True):
+    """Plot the given matrix using plt.imshow."""
+    plt.imshow(M.T)
+    plt.title("Matrix M from Equation X")
+    plt.ylabel("Index i")
+    plt.xlabel("Index j")
+    if save:
+        plt.savefig("results/{0}matrix-m-{1}x{1}.png".format(fstart, Ni, Nj))
+    if show:
+        plt.show()
+
+
+def get_smallest_eigenvalues(eigenvalues, n=10):
+    """Return a list of (eigenvalue, index) of the n smallest eigenvalues."""
     return heapq.nsmallest(
         n,
         list(enumerate(eigenvalues)),
@@ -53,18 +66,7 @@ def smallest_eigenvalues(eigenvalues, n=10):
     )
 
 
-def plotMatrixM(M, Ni, Nj, show=True):
-    """Plot the given matrix using plt.imshow."""
-    plt.imshow(M.T)
-    plt.title("Matrix M from Equation X")
-    plt.ylabel("Index i")
-    plt.xlabel("Index j")
-    plt.savefig("results/matrix-m-{0}x{0}.png".format(Ni, Nj))
-    if show:
-        plt.show()
-
-
-def plotSpectrumOfEigenFrequencies(
+def plot_spectrum_of_eigen_frequencies(
         Nis=np.arange(9, 90, 10), load=True, save=True, show=True):
     """3D: Plot eigenfrequencies while varying discretization step."""
     print("Nis = {}".format(Nis))
@@ -72,7 +74,7 @@ def plotSpectrumOfEigenFrequencies(
     eigenFrequencies = []
     for Ni in Nis:
         print("Ni = {}".format(Ni))
-        fname = "data/eigenfrequencies-{}.pickle".format(Ni)
+        fname = "data/3d-eigenfrequencies-{}.pickle".format(Ni)
         loaded = False
         if load:
             try:
@@ -98,46 +100,60 @@ def plotSpectrumOfEigenFrequencies(
     labels = ["0" if l == 0 else "{:.0E}".format(l) for l in locs]
     plt.yticks(locs, labels)
     if save:
-        plt.savefig("results/eigen-frequencies.png")
+        plt.savefig("results/3d-eigen-frequencies.png")
     if show:
         plt.show()
 
 
+def plot_eigenvectors_for_shapes(Ni_=29, Nj_=29, save=True, show=True):
+    """3C: Plot eigenvectors for the smallest eigenvalues for each shape."""
+    if Ni_ % 2 == 0:
+        raise ValueError("Ni should be an odd number")
+    if Nj_ % 2 == 0:
+        raise ValueError("Nj should be an odd number")
+
+    L = 1
+    dx = L / Ni_
+    dy = L / Nj_
+
+    for shape, Ni, Nj, boundary_f in [
+        ("square",    Ni_,    Nj_, boundary),
+        ("rectangle", 2 *Ni_, Nj_, boundary),
+        ("circle",    Ni_,    Nj_, circleBoundary)
+    ]:
+        M = makeMatrixM(Ni + 2, Nj + 2, boundary_f)
+        plotMatrixM(M, Ni, Nj, save=False, show=show)
+
+        eigenvalues_and_eigenvectors = np.linalg.eig(M * 1/dx**2)
+        eigenvalues = [x for x in eigenvalues_and_eigenvectors[0] if x != 0]
+        eigenvectors = eigenvalues_and_eigenvectors[1].T
+        smallest_eigenvalues = get_smallest_eigenvalues(eigenvalues, n=10)
+
+        for i, eigenvalue in smallest_eigenvalues:
+            eigenvector = eigenvectors[i]
+            eigenmatrix = eigenvector.reshape(Ni + 2, Nj + 2)
+            print("Eigenvalue {} for shape {}".format(eigenvalue, shape))
+            plt.imshow(eigenmatrix.real)
+            # plt.xlabel()
+            if show:
+                plt.show()
+
+
 if __name__ == "__main__":
     # Question A.
-    Ni, Nj = 4, 4
-    plotMatrixM(makeMatrixM(Ni + 2, Nj + 2, boundary), Ni, Nj)
+    # Ni, Nj = 4, 4
+    # M = makeMatrixM(Ni + 2, Nj + 2, boundary, show=True)
+    # plotMatrixM(M, Ni, Nj, fstart="3a-")
+    plot_eigenvectors_for_shapes(show=True)
     # Question D.
-    plotSpectrumOfEigenFrequencies(load=True, save=True)
+    # plot_spectrum_of_eigen_frequencies(load=True, save=True, show=True)
 
-    # L = 1
-    # Ni = 21
-    # Nj = 21
-    # dx = L / Ni
-    # dy = L / Nj
 
-    # M = makeMatrixM(Ni + 2, Nj + 2, boundary)
-    # plotMatrixM(M)
-    # M = makeMatrixM(Ni + 2, 2 * Nj + 2, boundary)
-    # plotMatrixM(M)
-    # M = makeMatrixM(Ni + 2, Nj + 2, circleBoundary)
-    # plotMatrixM(M)
 
-    # v = np.zeros((Nj * Ni, 1))
 
-    # answer = np.linalg.eig(M * 1/dx**2)
-    # eigenvalues = [x for x in answer[0] if x != 0]
-    # print(eigenvalues)
-    # eigenvectors = answer[1].T
-    # smallest = smallest_eigenvalues(eigenvalues, n=10)
 
-    # for i, eigenvalue in smallest:
-    #     eigenvector = eigenvectors[i]
-    #     eigenmatrix = eigenvector.reshape(Ni+2, Nj+2)
-    #     plt.imshow(eigenmatrix.real)
-    #     plt.show()
-        # plt.plot(list(range(len(eigenvector))), eigenvector)
-        # plt.show()
+    # plt.plot(list(range(len(eigenvector))), eigenvector)
+    # plt.show()
 
     # print(answer[0])
     # print()
