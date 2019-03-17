@@ -104,7 +104,7 @@ def plot_spectrum_of_eigen_frequencies(
 
 
 def plot_eigenvectors_for_shapes(Ni_=29, Nj_=29, save=True, show=True):
-    """3C: Plot eigenvectors for the smallest eigenvalues for each shape."""
+    """3B: Plot eigenvectors for the smallest eigenvalues for each shape."""
     if Ni_ % 2 == 0:
         raise ValueError("Ni should be an odd number")
     if Nj_ % 2 == 0:
@@ -140,7 +140,7 @@ def plot_eigenvectors_for_shapes(Ni_=29, Nj_=29, save=True, show=True):
                     eigenvalue, Ni, Nj, shape)
             )
             if save:
-                plt.savefig("results/3c-eigenvector-shape-{}-eigenvector{:.2f}".format(
+                plt.savefig("results/3b-eigenvector-shape-{}-eigenvector{:.2f}".format(
                     shape, eigenvalue).replace(".", "-") + ".png")
             if show:
                 plt.show()
@@ -149,8 +149,8 @@ def plot_eigenvectors_for_shapes(Ni_=29, Nj_=29, save=True, show=True):
 if __name__ == "__main__":
     # Question A.
     Ni, Nj = 4, 4
-    M = makeMatrixM(Ni + 2, Nj + 2, boundary, show=True)
-    plotMatrixM(M, Ni, Nj, fstart="3a-")
+    M = makeMatrixM(Ni + 2, Nj + 2, boundary)
+    plotMatrixM(M, Ni, Nj, fstart="3a-", show=True)
     # Question B.
     plot_eigenvectors_for_shapes(show=True)
     # Question D.
