@@ -5,6 +5,8 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 
+from matplotlib import colors
+from matplotlib.animation import FuncAnimation, writers
 
 def makeMatrixM(Ni, Nj, boundary_func):
     M = np.zeros((Ni * Nj, Ni * Nj))
@@ -131,7 +133,8 @@ def plot_eigenvectors_for_shapes(Ni_=29, Nj_=29, save=True, show=True):
         for i, eigenvalue in smallest_eigenvalues:
             eigenvector = eigenvectors[i]
             eigenmatrix = eigenvector.reshape(Ni + 2, Nj + 2)
-            print("Eigenvalue {} for shape {}".format(eigenvalue, shape))
+            print("Eigenvalue {} for shape {} eigenvector = \n{}".format(
+                eigenvalue, shape, eigenvector.tolist()))
             plt.imshow(eigenmatrix.real)
             plt.ylabel("Row index i")
             plt.xlabel("Column index j")
@@ -147,27 +150,63 @@ def plot_eigenvectors_for_shapes(Ni_=29, Nj_=29, save=True, show=True):
                 plt.show()
 
 
+def animation_of_membrane(v0, K, A=1, B=1, c=1, dt=0.01, max_t=6.4,
+                          show=True, save=True):
+    """Animation for given initial vector v0 and constants."""
+    lam = np.sqrt(K * -1)
+    v = v0
+    X = int(np.sqrt(len(v)))
+    T = lambda t: A * np.cos(c * lam * t) + B * np.sin(c * lam * t)
+
+    # First pass find maximum v and minimum v for colormap.
+    min_v = 1
+    max_v = -1
+    for t in np.arange(0, max_t, dt):
+        new_v = np.array(v) * T(t)
+        if np.min(new_v) < min_v: min_v = np.min(new_v)
+        if np.max(new_v) > max_v: max_v = np.max(new_v)
+    print("min_v = {}, max_v = {}".format(min_v, max_v))
+
+    # Now make an animation.
+    norm = colors.Normalize(vmin=min_v, vmax=max_v)
+    # Plot first frame.
+    im = plt.imshow(np.array(v).reshape(X, X), norm=norm)
+
+    # Plot later frame.
+    def animate(t):
+        nonlocal im
+        im.remove()
+        new_v = np.array(v) * T(t)
+        im = plt.imshow(new_v.reshape(X, X), norm=norm)
+
+    indices = np.arange(0, max_t, dt)
+    ani = FuncAnimation(plt.gcf(), animate, frames=indices, interval=1)
+
+    if show:
+        plt.show()
+    if save:
+        Writer = writers['ffmpeg']
+        writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
+        fname = "animation-K={}.mp4".format(K)
+        ani.save(fname, writer=writer)
+        print("Saved {}".format(fname))
+
+
 if __name__ == "__main__":
     # Question A.
     Ni, Nj = 4, 4
     M = makeMatrixM(Ni + 2, Nj + 2, boundary)
-    plotMatrixM(M, Ni, Nj, fstart="3a-", show=True)
+    # plotMatrixM(M, Ni, Nj, fstart="3a-", show=True)
+
     # Question B.
-    plot_eigenvectors_for_shapes(show=True)
+    # plot_eigenvectors_for_shapes(show=True)
+
     # Question D.
-    plot_spectrum_of_eigen_frequencies(load=True, save=True, show=True)
+    # plot_spectrum_of_eigen_frequencies(load=True, save=True, show=True)
 
-
-
-
-
-    # plt.plot(list(range(len(eigenvector))), eigenvector)
-    # plt.show()
-
-    # print(answer[0])
-    # print()
-    # print(answer[1])
-
-    #for i in range(len(answer[0])):
-    #    if abs(answer[0][i]) <0.01:
-    #        print(answer[0][i], answer[1][i], np.dot(M, answer[1][i]))
+    # Question E.
+    import e_params
+    for K, v0 in [
+        (e_params.K0, e_params.v0), (e_params.K1, e_params.v1)
+    ]:
+        animation_of_membrane(v0, K, show=False, save=True)
