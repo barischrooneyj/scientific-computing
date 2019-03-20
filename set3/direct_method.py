@@ -10,7 +10,7 @@ def makeMatrixM(Ni, alpha):
         for j in range(Ni):
             if not circleBoundary(i, j, Ni):
                 
-                    try: M[i * Ni + j, i * Ni + j] = 1-4*alpha 
+                    try: M[i * Ni + j, i * Ni + j] = -4*alpha 
                     except: pass
                     try: M[i * Ni + j, (i + 1) * Ni + j] = alpha 
                     except: pass
@@ -21,6 +21,8 @@ def makeMatrixM(Ni, alpha):
                     
                     if i * Ni + (j - 1) >= 0: 
                         M[i * Ni + j, i * Ni + (j - 1)] = alpha 
+            else:
+                M[i * Ni + j, i * Ni + j] = 1
                     
 
     return M
@@ -37,25 +39,31 @@ def circleBoundary(i, j, Ni):
 if __name__ == "__main__":
 
     L = 1
-    Ni = 5
+    Ni = 21
     deltax = 4./Ni
     D = 1
     
-    alpha = 0.05
+    alpha = 1/(deltax ** 2)
 
+    isource = int(2.6/4*Ni)
+    jsource = int(0.8/4*Ni)
+    vec_source_space = jsource * Ni + isource
     M = makeMatrixM(Ni, alpha) 
     plt.imshow(M)
     plt.colorbar()
     plt.show()
     b = np.zeros(Ni**2)
-    b[8] = 1
-    for i in range(40):
-        print(i)
-        b = np.dot(M, b)
-        b[8] = 1
+    b[vec_source_space] = 1
+    M[vec_source_space] = np.zeros((1, len(M[vec_source_space])))
     
-    b.shape = (Ni, Ni)
-    plt.imshow(b)
+    M[vec_source_space][vec_source_space] = 1
+    
+    plt.imshow(M)
+    plt.colorbar()
+    plt.show()    
+
+    c = linalg.solve(M, b)
+    plt.imshow(c.reshape((Ni, Ni)))
     plt.colorbar()
     plt.show()
     

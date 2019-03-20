@@ -18,6 +18,7 @@ def makeMatrixM(Ni, Nj, boundary_func):
                 M[i * Ni + j, (i - 1) * Ni + j] = 1
                 M[i * Ni + j, i * Ni + (j + 1)] = 1
                 M[i * Ni + j, i * Ni + (j - 1)] = 1
+
     return M
 
 
