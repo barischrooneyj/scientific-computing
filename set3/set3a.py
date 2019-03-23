@@ -43,8 +43,8 @@ def plotMatrixM(M, Ni, Nj, fstart="", show=True, save=True):
     """Plot the given matrix M using plt.imshow."""
     plt.imshow(M.T)
     plt.title("Matrix M from Equation 9 for a {} x {} system".format(Ni, Nj))
-    plt.ylabel("Index k of matrix M")
-    plt.xlabel("Index l of matrix M")
+    plt.ylabel("Index k")
+    plt.xlabel("Index l")
     plt.colorbar()
     if save:
         plt.savefig("results/{0}matrix-m-{1}x{1}.png".format(fstart, Ni, Nj))
@@ -62,12 +62,16 @@ def get_smallest_eigenvalues(eigenvalues, n=10):
 
 
 def plot_spectrum_of_eigen_frequencies(
-        Nis=np.arange(9, 90, 10), load=True, save=True, show=True):
+        Nis=np.arange(9, 90, 10), Njs=np.arange(9, 90, 10), shape="square",
+        load=True, save=True, show=True):
     """3D: Plot eigenfrequencies while varying discretization step."""
+    plt.close()
     print("Nis = {}".format(Nis))
     L = 1
     eigenFrequencies = []
-    for Ni in Nis:
+    for i in range(len(Nis)):
+        Ni = Nis[i]
+        Nj = Njs[i]
         print("Ni = {}".format(Ni))
         fname = "data/3d-eigenfrequencies-{}.pickle".format(Ni)
         loaded = False
@@ -79,7 +83,7 @@ def plot_spectrum_of_eigen_frequencies(
             except:
                 print("Could not load {}".format(fname))
         if not loaded:
-            M = makeMatrixM(Ni + 2, Ni + 2, boundary)
+            M = makeMatrixM(Ni + 2, Nj + 2, boundary)
             dx = L / Ni
             answer = np.linalg.eig(M * 1/dx**2)
             eigenvalues = np.sort([x for x in answer[0] if x != 0])
@@ -87,9 +91,11 @@ def plot_spectrum_of_eigen_frequencies(
         if save:
             with open(fname, "wb") as f:
                 pickle.dump(eigenvalues, f)
-    plt.boxplot(eigenFrequencies, labels=[str(x) for x in Nis])
-    plt.title("Eigenfrequencies varying discretization step")
-    plt.xlabel("Ni (Maximum space index i)")
+    lam = [np.sqrt(k * -1) for k in eigenFrequencies]
+    plt.boxplot(lam, labels=[str(x) for x in Nis])
+    plt.title(("Eigenfrequencies varying discretization step" +
+               "\nfor a {} system".format(shape)))
+    plt.xlabel("Ni (System length)")
     plt.ylabel("Eigenfrequencies")
     locs, _ = plt.yticks()
     labels = ["0" if l == 0 else "{:.0E}".format(l) for l in locs]
@@ -114,12 +120,11 @@ def plot_eigenvectors_for_shapes(Ni_=29, Nj_=29, save=True, show=True,
 
     # For each system shape.
     for shape, Ni, Nj, boundary_f in [
-        ("square",      Ni_, Nj_,   boundary),
-        ("rectangular", Ni_, 2*Nj_, boundary),
+        # ("square",      Ni_, Nj_,   boundary),
+        # ("rectangular", Ni_, 2*Nj_, boundary),
         ("circular",    Ni_, Nj_,   circleBoundary)
     ]:
         M = makeMatrixM(Ni + 2, Nj + 2, boundary_f)
-        plt.close()
         plotMatrixM(M, Ni, Nj, save=False, show=show)
 
         eigenvalues_and_eigenvectors = np.linalg.eig(M * 1/dx**2)
@@ -127,25 +132,8 @@ def plot_eigenvectors_for_shapes(Ni_=29, Nj_=29, save=True, show=True,
         eigenvectors = eigenvalues_and_eigenvectors[1].T
         smallest_eigenvalues = get_smallest_eigenvalues(eigenvalues, n=20)
 
-        eig_names = set()
-        def notyet(i, eigenvalue):
-            """Eigenvalue not yet seen with same leading integer part?"""
-            eig_name = str(eigenvalue).split(".", 1)[0]
-            if eig_name in eig_names:
-                return False
-            eig_names.add(eig_name)
-            return True
-
-        # Remove duplicate eigenvalues.
-        smallest_eigenvalues = [x for x in smallest_eigenvalues if notyet(*x)]
-
-        plt.close()
         # For each of n smallest eigenvalues.
-        for plt_num, (i, eigenvalue) in enumerate(smallest_eigenvalues):
-
-            # Create a new figure for the subplots.
-            if plt_num % plots_per_subplot == 0:
-                fig, axes = plt.subplots(plots_per_subplot, 1)
+        for i, eigenvalue in smallest_eigenvalues:
 
             # Reshape eigenvector.
             eigenvector = eigenvectors[i]
@@ -158,37 +146,30 @@ def plot_eigenvectors_for_shapes(Ni_=29, Nj_=29, save=True, show=True,
                    "system size {} x {} saved to:\n\t{}").format(
                        eigenvalue, shape, Ni, Nj, fname))
             with open(fname, "w") as f:
-                json.dump(eigenvector.tolist(), f)
+                json.dump(eigenvector.real.tolist(), f)
 
             # Plot subplot.
-            ax = axes[plt_num % plots_per_subplot]
-            ax.imshow(eigenmatrix.real)
-            ax.set_ylabel("Index k")
-            ax.set_xlabel("Index l")
-            ax.set_title("λ = {:.2f}".format(eigenvalue))
+            plt.imshow(eigenmatrix.real)
+            plt.ylabel("Index k")
+            plt.xlabel("Index l")
+            plt.title(("Reshaped eigenvector for λ = {:.2f}\n " +
+                        "of a {} system on a {} x {} grid").format(
+                            eigenvalue.real, shape, Ni + 2, Nj + 2))
 
             # Save/show figure.
-            if plt_num % plots_per_subplot == plots_per_subplot - 1:
-
-                # TODO: Set subplot width.
-                # fig.set_figwidth(5)
-                # plt.subplots_adjust(wspace=0)
-
-                plt.suptitle(("Reshaped eigenvector for a\n " +
-                              "{} system on a {} x {} grid").format(
-                                    shape, Ni + 2, Nj + 2))
-                plt.tight_layout()
-                if save:
-                    plt.savefig(("results/3b-eigenvector-" +
-                                "shape-{}-eigenvector{:.2f}").format(
+            if save:
+                plt.savefig(("results/3b-eigenvector-" +
+                            "shape-{}-eigenvector{:.2f}").format(
                                 shape, eigenvalue).replace(".", "-") + ".png")
-                if show:
-                    plt.show()
+            if show:
+                plt.show()
 
 
 def animation_of_membrane(v0, K, A=1, B=1, c=1, dt=0.01, max_t=6.4,
                           show=True, save=True):
     """Animation for given initial vector v0 and constants."""
+    plt.close()
+
     lam = np.sqrt(K * -1)
     v = v0
     X = int(np.sqrt(len(v)))
@@ -235,7 +216,7 @@ if __name__ == "__main__":
     # plotMatrixM(M, Ni, Nj, fstart="3a-", show=True)
 
     # Question B.
-    plot_eigenvectors_for_shapes(Ni_=29, Nj_=29, show=True)
+    plot_eigenvectors_for_shapes(Ni_=49, Nj_=49, show=True)
 
     # Question D.
     plot_spectrum_of_eigen_frequencies(load=True, save=True, show=True)
