@@ -8,6 +8,7 @@ import numpy as np
 from matplotlib import colors
 from matplotlib.animation import FuncAnimation, writers
 
+
 def makeMatrixM(Ni, Nj, boundary_func):
     M = np.zeros((Ni * Nj, Ni * Nj))
     for i in range(Ni):
@@ -62,17 +63,17 @@ def get_smallest_eigenvalues(eigenvalues, n=10):
 
 
 def plot_spectrum_of_eigen_frequencies(
-        Nis=np.arange(9, 90, 10), Njs=np.arange(9, 90, 10), shape="square",
-        load=True, save=True, show=True):
+        Nis, Njs, boundary_, shape, load=True, save=True, show=True):
     """3D: Plot eigenfrequencies while varying discretization step."""
     plt.close()
     print("Nis = {}".format(Nis))
+    print("Njs = {}".format(Njs))
     L = 1
     eigenFrequencies = []
     for i in range(len(Nis)):
         Ni = Nis[i]
         Nj = Njs[i]
-        print("Ni = {}".format(Ni))
+        print("Ni = {} Nj".format(Ni, Nj))
         fname = "data/3d-eigenfrequencies-{}.pickle".format(Ni)
         loaded = False
         if load:
@@ -83,7 +84,7 @@ def plot_spectrum_of_eigen_frequencies(
             except:
                 print("Could not load {}".format(fname))
         if not loaded:
-            M = makeMatrixM(Ni + 2, Nj + 2, boundary)
+            M = makeMatrixM(Ni + 2, Nj + 2, boundary_)
             dx = L / Ni
             answer = np.linalg.eig(M * 1/dx**2)
             eigenvalues = np.sort([x for x in answer[0] if x != 0])
@@ -92,22 +93,21 @@ def plot_spectrum_of_eigen_frequencies(
             with open(fname, "wb") as f:
                 pickle.dump(eigenvalues, f)
     lam = [np.sqrt(k * -1) for k in eigenFrequencies]
-    plt.boxplot(lam, labels=[str(x) for x in Nis])
+    plt.boxplot(lam, labels=[str(Nis[i] * Njs[i]) for i in range(len(Nis))])
     plt.title(("Eigenfrequencies varying discretization step" +
                "\nfor a {} system".format(shape)))
-    plt.xlabel("Ni (System length)")
+    plt.xlabel("Grid size")
     plt.ylabel("Eigenfrequencies")
     locs, _ = plt.yticks()
     labels = ["0" if l == 0 else "{:.0E}".format(l) for l in locs]
     plt.yticks(locs, labels)
     if save:
-        plt.savefig("results/3d-eigen-frequencies.png")
+        plt.savefig("results/3d-eigen-frequencies-{}.png".format(shape))
     if show:
         plt.show()
 
 
-def plot_eigenvectors_for_shapes(Ni_=29, Nj_=29, save=True, show=True,
-                                 plots_per_subplot=4):
+def plot_eigenvectors_for_shapes(Ni_, Nj_, save=True, show=True):
     """3B: Plot eigenvectors for the smallest eigenvalues for each shape."""
     if Ni_ % 2 == 0:
         raise ValueError("Ni should be an odd number")
@@ -120,8 +120,8 @@ def plot_eigenvectors_for_shapes(Ni_=29, Nj_=29, save=True, show=True,
 
     # For each system shape.
     for shape, Ni, Nj, boundary_f in [
-        # ("square",      Ni_, Nj_,   boundary),
-        # ("rectangular", Ni_, 2*Nj_, boundary),
+        ("square",      Ni_, Nj_,   boundary),
+        ("rectangular", Ni_, 2*Nj_, boundary),
         ("circular",    Ni_, Nj_,   circleBoundary)
     ]:
         M = makeMatrixM(Ni + 2, Nj + 2, boundary_f)
@@ -165,14 +165,14 @@ def plot_eigenvectors_for_shapes(Ni_=29, Nj_=29, save=True, show=True,
                 plt.show()
 
 
-def animation_of_membrane(v0, K, A=1, B=1, c=1, dt=0.01, max_t=6.4,
+def animation_of_membrane(v0, K, shape, Ni, Nj,
+                          A=1, B=1, c=1, dt=0.01, max_t=6.4,
                           show=True, save=True):
     """Animation for given initial vector v0 and constants."""
-    plt.close()
+    print("shape = {} Ni = {} Nj = {}".format(shape, Ni, Nj))
 
     lam = np.sqrt(K * -1)
     v = v0
-    X = int(np.sqrt(len(v)))
     T = lambda t: A * np.cos(c * lam * t) + B * np.sin(c * lam * t)
 
     # First pass find maximum v and minimum v for colormap.
@@ -187,14 +187,19 @@ def animation_of_membrane(v0, K, A=1, B=1, c=1, dt=0.01, max_t=6.4,
     # Now make an animation.
     norm = colors.Normalize(vmin=min_v, vmax=max_v)
     # Plot first frame.
-    im = plt.imshow(np.array(v).reshape(X, X), norm=norm)
+    im = plt.imshow(np.array(v).reshape(Ni + 2, Nj + 2), norm=norm)
+
+    # Title and colorbar.
+    plt.title("Animation for λ = {:.2f}\nfor a {} system".format(
+        k, shape))
+    plt.colorbar(norm=norm)
 
     # Plot later frame.
     def animate(t):
         nonlocal im
         im.remove()
         new_v = np.array(v) * T(t)
-        im = plt.imshow(new_v.reshape(X, X), norm=norm)
+        im = plt.imshow(new_v.reshape(Ni + 2, Nj + 2), norm=norm)
 
     indices = np.arange(0, max_t, dt)
     ani = FuncAnimation(plt.gcf(), animate, frames=indices, interval=1)
@@ -204,7 +209,7 @@ def animation_of_membrane(v0, K, A=1, B=1, c=1, dt=0.01, max_t=6.4,
     if save:
         Writer = writers['ffmpeg']
         writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
-        fname = "animation-K={}.mp4".format(K)
+        fname = "animation-λ={}-shape-{}.mp4".format(K, shape)
         ani.save(fname, writer=writer)
         print("Saved {}".format(fname))
 
@@ -213,17 +218,24 @@ if __name__ == "__main__":
     # Question A.
     Ni, Nj = 4, 4
     M = makeMatrixM(Ni + 2, Nj + 2, boundary)
-    # plotMatrixM(M, Ni, Nj, fstart="3a-", show=True)
+    plotMatrixM(M, Ni, Nj, fstart="3a-", show=True)
 
     # Question B.
     plot_eigenvectors_for_shapes(Ni_=49, Nj_=49, show=True)
 
     # Question D.
-    plot_spectrum_of_eigen_frequencies(load=True, save=True, show=True)
+    Nis = np.arange(9, 90, 10)
+    for shape, boundary_ in [
+            ("square", boundary),
+            ("rectangular", boundary),
+            ("circular", circleBoundary)
+    ]:
+        plot_spectrum_of_eigen_frequencies(
+            Nis=Nis, Njs=(Nis * 2) if shape == "rectangule" else Nis,
+            boundary_=boundary_, shape=shape, load=True, save=True, show=True
+        )
 
     # Question E.
-    import e_params
-    for K, v0 in [
-        (e_params.K0, e_params.v0), (e_params.K1, e_params.v1)
-    ]:
-        animation_of_membrane(v0, K, show=False, save=True)
+    from e_params import params
+    for shape, k, Ni, Nj, eigen_vector in params[6:]:
+        animation_of_membrane(eigen_vector, k, shape, Ni, Nj, show=True, save=True)
