@@ -62,8 +62,9 @@ def get_smallest_eigenvalues(eigenvalues, n=10):
     )
 
 
-def plot_spectrum_of_eigen_frequencies(
-        Nis, Njs, boundary_, shape, load=True, save=True, show=True):
+def plot_spectrum_of_eigen_frequencies(Nis, Njs, boundary_, shape,
+                                       load=True, save=True, show=True,
+                                       y_lim_top=None, fappend=""):
     """3D: Plot eigenfrequencies while varying discretization step."""
     plt.close()
     print("Nis = {}".format(Nis))
@@ -88,21 +89,23 @@ def plot_spectrum_of_eigen_frequencies(
             dx = L / Ni
             answer = np.linalg.eig(M * 1/dx**2)
             eigenvalues = np.sort([x for x in answer[0] if x != 0])
+        # plotMatrixM(M, Ni=Ni, Nj=Nj, show=True, save=False)
         eigenFrequencies.append(eigenvalues)
         if save:
             with open(fname, "wb") as f:
                 pickle.dump(eigenvalues, f)
     lam = [np.sqrt(k * -1) for k in eigenFrequencies]
-    plt.boxplot(lam, labels=[str(Nis[i] * Njs[i]) for i in range(len(Nis))])
+    plt.boxplot(lam, labels=[str(Nis[i]) for i in range(len(Nis))])
     plt.title(("Eigenfrequencies varying discretization step" +
                "\nfor a {} system".format(shape)))
-    plt.xlabel("Grid size")
+    plt.xlabel("System length (Ni)")
     plt.ylabel("Eigenfrequencies")
-    locs, _ = plt.yticks()
-    labels = ["0" if l == 0 else "{:.0E}".format(l) for l in locs]
-    plt.yticks(locs, labels)
+    plt.gca().set_ylim(bottom=0)
+    if y_lim_top is not None:
+        plt.gca().set_ylim(top=y_lim_top)
     if save:
-        plt.savefig("results/3d-eigen-frequencies-{}.png".format(shape))
+        plt.savefig("results/3d-eigen-frequencies-{}-{}.png".format(
+            shape, fappend))
     if show:
         plt.show()
 
@@ -224,15 +227,19 @@ if __name__ == "__main__":
     plot_eigenvectors_for_shapes(Ni_=49, Nj_=49, show=True)
 
     # Question D.
-    Nis = np.arange(9, 90, 10)
-    for shape, boundary_ in [
-            ("square", boundary),
-            ("rectangular", boundary),
-            ("circular", circleBoundary)
+    for shape, Nis, boundary_ in [
+            ("square", np.arange(9, 60, 10), boundary),
+            ("rectangular", np.arange(9, 60, 10), boundary),
+            ("circular", np.arange(9, 60, 10), circleBoundary)
     ]:
         plot_spectrum_of_eigen_frequencies(
-            Nis=Nis, Njs=(Nis * 2) if shape == "rectangule" else Nis,
+            Nis=Nis, Njs=(Nis * 2) if shape == "rectangular" else Nis,
             boundary_=boundary_, shape=shape, load=True, save=True, show=True
+        )
+        plot_spectrum_of_eigen_frequencies(
+            Nis=Nis, Njs=(Nis * 2) if shape == "rectangular" else Nis,
+            boundary_=boundary_, shape=shape, load=True, save=True, show=True,
+            y_lim_top=20, fappend="ylim"
         )
 
     # Question E.
