@@ -9,46 +9,51 @@ from matplotlib import colors
 from matplotlib.animation import FuncAnimation, writers
 
 
-def makeMatrixM(Ni, Nj, boundary_func):
-    M = np.zeros((Ni * Nj, Ni * Nj))
-    for i in range(Ni):
-        for j in range(Nj):
-            if not boundary_func(i, j, Ni, Nj):
-                M[i * Nj + j, i * Nj + j] = -4
-                M[i * Nj + j, (i + 1) * Nj + j] = 1
-                M[i * Nj + j, (i - 1) * Nj + j] = 1
-                M[i * Nj + j, i * Nj + (j + 1)] = 1
-                M[i * Nj + j, i * Nj + (j - 1)] = 1
+def makeMatrixM(max_k, max_l, boundary_func):
+    """Construct a matrix M of given size and shape."""
+    M = np.zeros((max_k * max_l, max_k * max_l))
+    for k in range(max_k):
+        for l in range(max_l):
+            if not boundary_func(k, l, max_k, max_l):
+                M[k * max_l + l, k * max_l + l] = -4
+                M[k * max_l + l, (k + 1) * max_l + l] = 1
+                M[k * max_l + l, (k - 1) * max_l + l] = 1
+                M[k * max_l + l, k * max_l + (l + 1)] = 1
+                M[k * max_l + l, k * max_l + (l - 1)] = 1
     return M
 
 
-def boundary(i, j, Ni, Nj):
-    return (i == 0 or i == Ni - 1
-           or j == 0 or j == Nj - 1)
+def boundary(k, l, max_k, max_l):
+    """Is the given point outside the boundary?"""
+    return (k == 0 or k == max_k - 1
+           or l == 0 or l == max_l - 1)
 
 
-def circleBoundary(i, j, Ni, Nj):
-    if Ni % 2 == 0 or Nj % 2 == 0:
+def circleBoundary(k, l, max_k, max_l):
+    """Is the given point outside the circle boundary?"""
+    if max_k % 2 == 0 or max_l % 2 == 0:
         raise ValueError("Circle does not have odd length")
-    if Ni != Nj:
+    if max_k != max_l:
         raise ValueError("Circle height not equal to width")
-    if boundary(i, j, Ni, Nj):
+    if boundary(k, l, max_k, max_l):
         return True
-    C = Ni // 2
-    dist = np.sqrt(abs(i - C) ** 2 + abs(j - C) ** 2)
-    r = (Ni-2) / 2
+    C = max_k // 2
+    dist = np.sqrt(abs(k - C) ** 2 + abs(l - C) ** 2)
+    r = (max_k - 2) / 2
     return dist > r
 
 
-def plotMatrixM(M, Ni, Nj, fstart="", show=True, save=True):
+def plotMatrixM(M, max_k, max_l, fstart="", show=True, save=True):
     """Plot the given matrix M using plt.imshow."""
     plt.imshow(M.T)
-    plt.title("Matrix M from Equation 9 for a {} x {} system".format(Ni, Nj))
+    plt.title("Matrix M for a {} x {} system".format(
+        max_k, max_l))
     plt.ylabel("Index k")
     plt.xlabel("Index l")
     plt.colorbar()
     if save:
-        plt.savefig("results/{0}matrix-m-{1}x{1}.png".format(fstart, Ni, Nj))
+        plt.savefig("results/{0}matrix-m-{1}x{1}.png".format(
+            fstart, max_k, max_l))
     if show:
         plt.show()
 
@@ -136,7 +141,8 @@ def plot_eigenvectors_for_shapes(Ni_, Nj_, save=True, show=True):
         smallest_eigenvalues = get_smallest_eigenvalues(eigenvalues, n=20)
 
         # For each of n smallest eigenvalues.
-        for i, eigenvalue in smallest_eigenvalues:
+        for i, k in smallest_eigenvalues:
+            eigenvalue = np.sqrt(k * -1)
 
             # Reshape eigenvector.
             eigenvector = eigenvectors[i]
@@ -194,7 +200,7 @@ def animation_of_membrane(v0, K, shape, Ni, Nj,
 
     # Title and colorbar.
     plt.title("Animation for λ = {:.2f}\nfor a {} system".format(
-        k, shape))
+        lam, shape))
     plt.colorbar(norm=norm)
 
     # Plot later frame.
@@ -212,7 +218,7 @@ def animation_of_membrane(v0, K, shape, Ni, Nj,
     if save:
         Writer = writers['ffmpeg']
         writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
-        fname = "animation-λ={}-shape-{}.mp4".format(K, shape)
+        fname = "results/animation-λ={}-shape-{}.mp4".format(lam, shape)
         ani.save(fname, writer=writer)
         print("Saved {}".format(fname))
 
@@ -244,5 +250,5 @@ if __name__ == "__main__":
 
     # Question E.
     from e_params import params
-    for shape, k, Ni, Nj, eigen_vector in params[6:]:
+    for shape, k, Ni, Nj, eigen_vector in params:
         animation_of_membrane(eigen_vector, k, shape, Ni, Nj, show=True, save=True)
